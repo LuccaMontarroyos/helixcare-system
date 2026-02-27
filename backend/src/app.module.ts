@@ -4,6 +4,7 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './modules/users/users.module';
+import { RolesModule } from './modules/roles/roles.module';
 
 @Module({
   imports: [
@@ -11,9 +12,6 @@ import { UsersModule } from './modules/users/users.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
-
-    UsersModule,
-    
     SequelizeModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -41,6 +39,8 @@ import { UsersModule } from './modules/users/users.module';
       }),
     }),
     
+    UsersModule,
+    RolesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
