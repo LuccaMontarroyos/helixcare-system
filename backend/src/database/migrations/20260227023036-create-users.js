@@ -25,7 +25,7 @@ module.exports = {
       },
       role_id: {
         type: Sequelize.UUID,
-        allowNull: true,
+        allowNull: false,
       },
       created_at: {
         type: Sequelize.DATE,

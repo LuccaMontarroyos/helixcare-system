@@ -1,4 +1,5 @@
-import { Table, Column, Model, DataType, CreatedAt, UpdatedAt, DeletedAt } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, CreatedAt, UpdatedAt, DeletedAt, ForeignKey, BelongsTo } from 'sequelize-typescript';
+import { Role } from 'src/modules/roles/entities/role.entity';
 
 @Table({
   tableName: 'users',
@@ -34,11 +35,15 @@ export class User extends Model<User> {
   })
   password_hash: string;
 
+  @ForeignKey(() => Role)
   @Column({
     type: DataType.UUID,
-    allowNull: true,
+    allowNull: false,
   })
   role_id: string;
+
+  @BelongsTo(() => Role)
+  role: Role;
 
   @CreatedAt
   declare created_at: Date;

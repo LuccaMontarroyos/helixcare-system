@@ -1,4 +1,5 @@
-import { Table, Column, Model, DataType, CreatedAt, UpdatedAt, DeletedAt } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, CreatedAt, UpdatedAt, DeletedAt, HasMany } from 'sequelize-typescript';
+import { User } from 'src/modules/users/entities/user.entity';
 
 @Table({
   tableName: 'roles',
@@ -21,6 +22,9 @@ export class Role extends Model<Role> {
     unique: true,
   })
   name: string;
+
+  @HasMany(() => User)
+  users: User[];
 
   @CreatedAt
   declare created_at: Date;
