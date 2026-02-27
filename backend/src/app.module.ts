@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -11,6 +12,8 @@ import { AppService } from './app.service';
       envFilePath: '.env',
     }),
 
+    UsersModule,
+    
     SequelizeModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
