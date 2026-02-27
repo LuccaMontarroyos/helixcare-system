@@ -41,6 +41,7 @@ import { RolesModule } from './modules/roles/roles.module';
     
     UsersModule,
     RolesModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
