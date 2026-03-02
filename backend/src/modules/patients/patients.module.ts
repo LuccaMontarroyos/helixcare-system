@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { Patient } from './entities/patient.entity';
-import { PatientsController } from './patients.controller';
+import { PatientsController } from './controllers/patients.controller';
 import { PatientsService } from './patients.service';
 
 @Module({
@@ -10,4 +10,4 @@ import { PatientsService } from './patients.service';
   providers: [PatientsService],
   exports: [SequelizeModule, PatientsService],
 })
-export class PatientsModule {}
+export class PatientsModule { }
