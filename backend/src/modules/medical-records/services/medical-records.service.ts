@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { CreationAttributes, Op } from 'sequelize';
@@ -8,14 +8,20 @@ import { PatientsService } from '../../patients/services/patients.service';
 import { User } from 'src/modules/users/entities/user.entity';
 import { RoleEnum } from 'src/modules/roles/enums/roles.enum';
 import { UpdateMedicalRecordDto } from '../dto/update-medical-record.dto';
+import { RedisLockService } from 'src/core/redis/redis-lock.service';
+import { MedicalRecordHistory } from '../entities/medical-record.history.entity';
 
 @Injectable()
 export class MedicalRecordsService {
   constructor(
     @InjectModel(MedicalRecord)
     private medicalRecordModel: typeof MedicalRecord,
+    @InjectModel(MedicalRecordHistory)
+    private historyModel: typeof MedicalRecordHistory,
     private sequelize: Sequelize,
     private patientsService: PatientsService, 
+    private redisLockService: RedisLockService,
+
   ) {}
 
   async create(doctorId: string, dto: CreateMedicalRecordDto): Promise<MedicalRecord> {
@@ -102,13 +108,32 @@ export class MedicalRecordsService {
       throw new ForbiddenException('Você não tem permissão para editar um prontuário criado por outro profissional.');
     }
 
+    const currentLockOwner = await this.redisLockService.getLockOwner(id);
+    if (currentLockOwner && currentLockOwner !== userId) {
+      throw new ConflictException('Este prontuário está sendo editado por outro profissional neste exato momento. Atualização rejeitada para evitar perda de dados.');
+    }
+
     const transaction = await this.sequelize.transaction();
     try {
+        await this.historyModel.create(
+            {
+              medical_record_id: record.id,
+              editor_id: userId,
+              old_anamnesis: record.anamnesis,
+              old_diagnosis: record.diagnosis,
+              old_prescription: record.prescription,
+              old_social_history: record.social_history,
+            } as CreationAttributes<MedicalRecordHistory>, 
+            { transaction }
+          );
+
       const updatedRecord = await record.update(
         dto as Partial<CreationAttributes<MedicalRecord>>, 
         { transaction }
       );
       await transaction.commit();
+
+      await this.redisLockService.releaseLock(id, userId);
       return updatedRecord;
     } catch (error) {
       await transaction.rollback();

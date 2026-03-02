@@ -8,6 +8,7 @@ import { RolesModule } from './modules/roles/roles.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { PatientsModule } from './modules/patients/patients.module';
 import { MedicalRecordsModule } from './modules/medical-records/medical-records.module';
+import { RedisModule } from './core/redis/redis.module';
 
 @Module({
   imports: [
@@ -46,7 +47,8 @@ import { MedicalRecordsModule } from './modules/medical-records/medical-records.
     RolesModule,
     AuthModule,
     PatientsModule,
-    MedicalRecordsModule
+    MedicalRecordsModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

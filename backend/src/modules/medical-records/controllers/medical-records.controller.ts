@@ -1,4 +1,4 @@
-import { Controller, Post, Put, Get, Delete, Param, Query, Body, UseGuards, UsePipes } from '@nestjs/common';
+import { Controller, Post, Put, Get, Delete, Param, Query, Body, UseGuards, UsePipes, ConflictException, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { MedicalRecordsService } from '../services/medical-records.service';
 import { CreateMedicalRecordDto } from '../dto/create-medical-record.dto';
@@ -11,13 +11,14 @@ import { Roles } from '../../../core/decorators/roles.decorator';
 import { RoleEnum } from '../../roles/enums/roles.enum';
 import { YupValidationPipe } from '../../../core/pipes/yup-validation.pipe';
 import { CurrentUser } from '../../../core/decorators/current-user.decorator';
+import { RedisLockService } from 'src/core/redis/redis-lock.service';
 
 @ApiTags('Medical Records')
 @ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('medical-records')
 export class MedicalRecordsController {
-  constructor(private readonly medicalRecordsService: MedicalRecordsService) {}
+  constructor(private readonly medicalRecordsService: MedicalRecordsService, private readonly redisLockService: RedisLockService) {}
 
   @Post()
   @ApiOperation({ summary: 'Cria uma nova evolução/prontuário para um paciente' })
@@ -64,6 +65,30 @@ export class MedicalRecordsController {
   @Roles(RoleEnum.ADMIN, RoleEnum.DOCTOR, RoleEnum.NURSE)
   async findOne(@Param('id') id: string) {
     return await this.medicalRecordsService.findOne(id);
+  }
+
+  @Post(':id/lock')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Trava um prontuário para edição exclusiva (Lock Pessimista)' })
+  @Roles(RoleEnum.DOCTOR, RoleEnum.NURSE)
+  async lockRecord(@Param('id') id: string, @CurrentUser() user: any) {
+    const locked = await this.redisLockService.acquireLock(id, user.id);
+    if (!locked) {
+      throw new ConflictException('O prontuário já está sendo editado por outro profissional.');
+    }
+    return { message: 'Prontuário travado com sucesso para edição.' };
+  }
+
+  @Post(':id/unlock')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Libera a trava de um prontuário manualmente' })
+  @Roles(RoleEnum.DOCTOR, RoleEnum.NURSE)
+  async unlockRecord(@Param('id') id: string, @CurrentUser() user: any) {
+    const unlocked = await this.redisLockService.releaseLock(id, user.id);
+    if (!unlocked) {
+      throw new ConflictException('Você não pode destravar um prontuário que não foi travado por você.');
+    }
+    return { message: 'Prontuário liberado com sucesso.' };
   }
 
   @Put(':id')
