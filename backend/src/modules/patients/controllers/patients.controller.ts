@@ -1,6 +1,6 @@
 import { Controller, Post, Get, Put, Delete, Param, Body, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { PatientsService } from './patients.service';
+import { PatientsService } from '../services/patients.service';
 import { CreatePatientDto } from '../dto/create-patient.dto';
 import { createPatientSchema } from '../schemas/create-patient.schema';
 import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';

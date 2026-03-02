@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { Role } from './entities/role.entity';
-import { RolesController } from './roles.controller';
+import { RolesController } from './controllers/roles.controller';
 import { RolesService } from './roles.service';
 
 @Module({
@@ -10,4 +10,4 @@ import { RolesService } from './roles.service';
   providers: [RolesService],
   exports: [SequelizeModule, RolesService],
 })
-export class RolesModule {}
+export class RolesModule { }

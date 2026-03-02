@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { PatientsModule } from './modules/patients/patients.module';
 import { MedicalRecordsModule } from './modules/medical-records/medical-records.module';
 import { RedisModule } from './core/redis/redis.module';
+import { AppointmentsModule } from './modules/appointments/appointments.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { RedisModule } from './core/redis/redis.module';
     PatientsModule,
     MedicalRecordsModule,
     RedisModule,
+    AppointmentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
