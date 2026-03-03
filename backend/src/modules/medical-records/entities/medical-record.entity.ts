@@ -27,26 +27,26 @@ export class MedicalRecord extends Model<MedicalRecord> {
   declare patient_id: string;
 
   @BelongsTo(() => Patient)
-  patient: Patient;
+  declare patient: Patient;
 
   @ForeignKey(() => User)
   @Column({ type: DataType.UUID, allowNull: false })
   declare doctor_id: string;
 
   @BelongsTo(() => User)
-  doctor: User;
+  declare doctor: User;
 
   @Column({ type: DataType.TEXT, allowNull: false })
-  anamnesis: string;
+  declare anamnesis: string;
 
   @Column({ type: DataType.STRING(255), allowNull: true })
-  diagnosis: string;
+  declare diagnosis: string;
 
   @Column({ type: DataType.TEXT, allowNull: true })
-  prescription: string;
+  declare prescription: string;
 
   @Column({ type: DataType.JSONB, allowNull: true })
-  social_history: SocialHistory;
+  declare social_history: SocialHistory;
 
   @CreatedAt
   declare created_at: Date;

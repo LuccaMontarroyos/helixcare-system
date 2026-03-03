@@ -12,6 +12,7 @@ import { RoleEnum } from '../../roles/enums/roles.enum';
 import { YupValidationPipe } from '../../../core/pipes/yup-validation.pipe';
 import { CurrentUser } from '../../../core/decorators/current-user.decorator';
 import { RedisLockService } from 'src/core/redis/redis-lock.service';
+import type { ICurrentUser } from '../..//auth/interfaces/current-user.interface';
 
 @ApiTags('Medical Records')
 @ApiBearerAuth('JWT-auth')
@@ -24,10 +25,9 @@ export class MedicalRecordsController {
   @ApiOperation({ summary: 'Cria uma nova evolução/prontuário para um paciente' })
   @ApiResponse({ status: 201, description: 'Prontuário criado com sucesso.' })
   @Roles(RoleEnum.DOCTOR, RoleEnum.NURSE)
-  @UsePipes(new YupValidationPipe(createMedicalRecordSchema))
   async create(
-    @Body() createMedicalRecordDto: CreateMedicalRecordDto,
-    @CurrentUser() user: any,
+    @Body(new YupValidationPipe(createMedicalRecordSchema)) createMedicalRecordDto: CreateMedicalRecordDto,
+    @CurrentUser() user: ICurrentUser,
   ) {
     return await this.medicalRecordsService.create(user.id, createMedicalRecordDto);
   }
@@ -71,7 +71,7 @@ export class MedicalRecordsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Trava um prontuário para edição exclusiva (Lock Pessimista)' })
   @Roles(RoleEnum.DOCTOR, RoleEnum.NURSE)
-  async lockRecord(@Param('id') id: string, @CurrentUser() user: any) {
+  async lockRecord(@Param('id') id: string, @CurrentUser() user: ICurrentUser) {
     const locked = await this.redisLockService.acquireLock(id, user.id);
     if (!locked) {
       throw new ConflictException('O prontuário já está sendo editado por outro profissional.');
@@ -83,7 +83,7 @@ export class MedicalRecordsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Libera a trava de um prontuário manualmente' })
   @Roles(RoleEnum.DOCTOR, RoleEnum.NURSE)
-  async unlockRecord(@Param('id') id: string, @CurrentUser() user: any) {
+  async unlockRecord(@Param('id') id: string, @CurrentUser() user: ICurrentUser) {
     const unlocked = await this.redisLockService.releaseLock(id, user.id);
     if (!unlocked) {
       throw new ConflictException('Você não pode destravar um prontuário que não foi travado por você.');
@@ -94,11 +94,10 @@ export class MedicalRecordsController {
   @Put(':id')
   @ApiOperation({ summary: 'Atualiza uma evolução clínica (Somente o Autor ou Admin)' })
   @Roles(RoleEnum.ADMIN, RoleEnum.DOCTOR, RoleEnum.NURSE)
-  @UsePipes(new YupValidationPipe(updateMedicalRecordSchema))
   async update(
     @Param('id') id: string,
-    @Body() updateMedicalRecordDto: UpdateMedicalRecordDto,
-    @CurrentUser() user: any,
+    @Body(new YupValidationPipe(updateMedicalRecordSchema)) updateMedicalRecordDto: UpdateMedicalRecordDto,
+    @CurrentUser() user: ICurrentUser,
   ) {
     return await this.medicalRecordsService.update(id, user.id, user.role, updateMedicalRecordDto);
   }
@@ -108,7 +107,7 @@ export class MedicalRecordsController {
   @Roles(RoleEnum.ADMIN, RoleEnum.DOCTOR, RoleEnum.NURSE)
   async remove(
     @Param('id') id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: ICurrentUser,
   ) {
     await this.medicalRecordsService.remove(id, user.id, user.role);
     return { message: 'Prontuário removido com sucesso.' };

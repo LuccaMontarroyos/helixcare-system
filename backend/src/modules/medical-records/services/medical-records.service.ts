@@ -5,10 +5,10 @@ import { CreationAttributes, Op } from 'sequelize';
 import { MedicalRecord } from '../entities/medical-record.entity';
 import { CreateMedicalRecordDto } from '../dto/create-medical-record.dto';
 import { PatientsService } from '../../patients/services/patients.service';
-import { User } from 'src/modules/users/entities/user.entity';
-import { RoleEnum } from 'src/modules/roles/enums/roles.enum';
+import { User } from '../../users/entities/user.entity';
+import { RoleEnum } from '../../roles/enums/roles.enum';
 import { UpdateMedicalRecordDto } from '../dto/update-medical-record.dto';
-import { RedisLockService } from 'src/core/redis/redis-lock.service';
+import { RedisLockService } from '../../../core/redis/redis-lock.service';
 import { MedicalRecordHistory } from '../entities/medical-record.history.entity';
 
 @Injectable()

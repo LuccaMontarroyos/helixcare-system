@@ -15,28 +15,28 @@ export class Patient extends Model<Patient> {
   declare id: string;
 
   @Column({ type: DataType.STRING(150), allowNull: false })
-  name: string;
+  declare name: string;
 
   @Column({ type: DataType.STRING(11), allowNull: false, unique: true })
-  cpf: string;
+  declare cpf: string;
 
   @Column({ type: DataType.DATEONLY, allowNull: false })
-  birth_date: string;
+  declare birth_date: string;
 
   @Column({ type: DataType.STRING(20), allowNull: true })
-  gender: string;
+  declare gender: string;
 
   @Column({ type: DataType.STRING(3), allowNull: true })
-  blood_type: string;
+  declare blood_type: string;
 
   @Column({ type: DataType.TEXT, allowNull: true })
-  allergies: string;
+  declare allergies: string;
 
   @Column({ type: DataType.JSONB, allowNull: false })
-  contact_info: any;
+  declare contact_info: any;
 
   @Column({ type: DataType.JSONB, allowNull: true })
-  address: any;
+  declare address: any;
 
   @CreatedAt
   declare created_at: Date;

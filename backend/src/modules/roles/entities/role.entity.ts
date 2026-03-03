@@ -21,7 +21,7 @@ export class Role extends Model<Role> {
     allowNull: false,
     unique: true,
   })
-  name: string;
+  declare name: string;
 
   @HasMany(() => User)
   users: User[];

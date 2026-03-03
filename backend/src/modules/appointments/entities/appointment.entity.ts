@@ -22,27 +22,27 @@ export class Appointment extends Model<Appointment> {
   declare patient_id: string;
 
   @BelongsTo(() => Patient)
-  patient: Patient;
+  declare patient: Patient;
 
   @ForeignKey(() => User)
   @Column({ type: DataType.UUID, allowNull: false })
   declare doctor_id: string;
 
   @BelongsTo(() => User)
-  doctor: User;
+  declare doctor: User;
 
   @Column({ type: DataType.DATE, allowNull: false })
-  appointment_date: Date;
+  declare appointment_date: Date;
 
   @Column({ 
     type: DataType.STRING(20), 
     allowNull: false,
     defaultValue: AppointmentStatusEnum.SCHEDULED 
   })
-  status: AppointmentStatusEnum;
+  declare status: AppointmentStatusEnum;
 
   @Column({ type: DataType.TEXT, allowNull: true })
-  notes: string;
+  declare notes: string;
 
   @CreatedAt
   declare created_at: Date;

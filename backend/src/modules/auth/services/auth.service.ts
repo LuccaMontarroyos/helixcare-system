@@ -4,10 +4,10 @@
   import { Sequelize } from 'sequelize-typescript';
   import { CreationAttributes } from 'sequelize';
   import * as argon2 from 'argon2';
-  import { User } from '../users/entities/user.entity';
-  import { RegisterDto } from './dto/register.dto';
-  import { LoginDto } from './dto/login.dto';
-  import { Role } from '../roles/entities/role.entity';
+  import { User } from '../../users/entities/user.entity';
+  import { RegisterDto } from '../dto/register.dto';
+  import { LoginDto } from '../dto/login.dto';
+  import { Role } from '../../roles/entities/role.entity';
 
   @Injectable()
   export class AuthService {

@@ -1,13 +1,13 @@
 import { Controller, Get, Put, Delete, Param, Body, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { UsersService } from './users.service';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { updateUserSchema } from './schemas/update-user.schema';
-import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
-import { RolesGuard } from '../../core/guards/roles.guard';
-import { Roles } from '../../core/decorators/roles.decorator';
-import { RoleEnum } from '../roles/enums/roles.enum';
-import { YupValidationPipe } from '../../core/pipes/yup-validation.pipe';
+import { UsersService } from '../services/users.service';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { updateUserSchema } from '../schemas/update-user.schema';
+import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../core/guards/roles.guard';
+import { Roles } from '../../../core/decorators/roles.decorator';
+import { RoleEnum } from '../../roles/enums/roles.enum';
+import { YupValidationPipe } from '../../../core/pipes/yup-validation.pipe';
 
 @ApiTags('Users (Staff)')
 @ApiBearerAuth('JWT-auth')

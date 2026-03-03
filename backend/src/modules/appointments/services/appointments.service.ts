@@ -71,10 +71,9 @@ export class AppointmentsService {
     if (filters.doctor_id) whereClause.doctor_id = filters.doctor_id;
     if (filters.status) whereClause.status = filters.status;
     if (filters.date) {
-      const startOfDay = new Date(filters.date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(filters.date);
-      endOfDay.setHours(23, 59, 59, 999);
+      const [year, month, day] = filters.date.split('-').map(Number);
+      const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);      
+      const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
       
       whereClause.appointment_date = { [Op.between]: [startOfDay, endOfDay] };
     }

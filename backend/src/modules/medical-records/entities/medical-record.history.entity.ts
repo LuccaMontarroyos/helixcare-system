@@ -17,25 +17,25 @@ export class MedicalRecordHistory extends Model<MedicalRecordHistory> {
 
   @ForeignKey(() => MedicalRecord)
   @Column({ type: DataType.UUID, allowNull: false })
-  medical_record_id: string;
+  declare medical_record_id: string;
 
   @BelongsTo(() => MedicalRecord)
-  medicalRecord: MedicalRecord;
+  declare medicalRecord: MedicalRecord;
 
   @Column({ type: DataType.UUID, allowNull: false })
-  editor_id: string;
+  declare editor_id: string;
 
   @Column({ type: DataType.TEXT, allowNull: false })
-  old_anamnesis: string;
+  declare old_anamnesis: string;
 
   @Column({ type: DataType.STRING(255), allowNull: true })
-  old_diagnosis: string;
+  declare old_diagnosis: string;
 
   @Column({ type: DataType.TEXT, allowNull: true })
-  old_prescription: string;
+  declare old_prescription: string;
 
   @Column({ type: DataType.JSONB, allowNull: true })
-  old_social_history: SocialHistory;
+  declare old_social_history: SocialHistory;
 
   @CreatedAt
   @Column({ field: 'edited_at' })

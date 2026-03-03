@@ -20,30 +20,30 @@ export class User extends Model<User> {
     type: DataType.STRING(150),
     allowNull: false,
   })
-  name: string;
+  declare name: string;
 
   @Column({
     type: DataType.STRING(150),
     allowNull: false,
     unique: true,
   })
-  email: string;
+  declare email: string;
 
   @Column({
     type: DataType.STRING,
     allowNull: false,
   })
-  password_hash: string;
+  declare password_hash: string;
 
   @ForeignKey(() => Role)
   @Column({
     type: DataType.UUID,
     allowNull: false,
   })
-  role_id: string;
+  declare role_id: string;
 
   @BelongsTo(() => Role)
-  role: Role;
+  declare role: Role;
 
   @CreatedAt
   declare created_at: Date;
