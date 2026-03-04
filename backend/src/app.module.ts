@@ -10,6 +10,7 @@ import { PatientsModule } from './modules/patients/patients.module';
 import { MedicalRecordsModule } from './modules/medical-records/medical-records.module';
 import { RedisModule } from './core/redis/redis.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
+import { ExamsModule } from './modules/exams/exams.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { AppointmentsModule } from './modules/appointments/appointments.module';
     MedicalRecordsModule,
     RedisModule,
     AppointmentsModule,
+    ExamsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
