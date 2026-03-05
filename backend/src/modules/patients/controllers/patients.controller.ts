@@ -24,8 +24,7 @@ export class PatientsController {
   @ApiResponse({ status: 400, description: 'Erro de validação (Yup) ou CPF já existente.' })
   @ApiResponse({ status: 403, description: 'Acesso negado para o cargo atual.' })
   @Roles(RoleEnum.ADMIN, RoleEnum.RECEPTIONIST)
-  @UsePipes(new YupValidationPipe(createPatientSchema))
-  async create(@Body() createPatientDto: CreatePatientDto) {
+  async create(@Body(new YupValidationPipe(createPatientSchema)) createPatientDto: CreatePatientDto) {
     return await this.patientsService.create(createPatientDto);
   }
 
@@ -33,8 +32,7 @@ export class PatientsController {
   @ApiOperation({ summary: 'Atualiza os dados de um paciente existente' })
   @ApiResponse({ status: 200, description: 'Paciente atualizado com sucesso.' })
   @Roles(RoleEnum.ADMIN, RoleEnum.RECEPTIONIST)
-  @UsePipes(new YupValidationPipe(updatePatientSchema))
-  async update(@Param('id') id: string, @Body() updatePatientDto: UpdatePatientDto) {
+  async update(@Param('id') id: string, @Body(new YupValidationPipe(updatePatientSchema)) updatePatientDto: UpdatePatientDto) {
     return await this.patientsService.update(id, updatePatientDto);
   }
 

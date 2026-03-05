@@ -19,4 +19,11 @@ export const updatePatientSchema = yup.object().shape({
     city: yup.string(),
     state: yup.string().max(2),
   }).nullable(),
+  
+  insurance_provider: yup.string().nullable(),
+  insurance_number: yup.string().nullable().when('insurance_provider', {
+    is: (val: string) => val && val.length > 0,
+    then: (schema) => schema.required('O número da carteirinha é obrigatório quando o plano de saúde é informado.'),
+    otherwise: (schema) => schema.nullable(),
+  }),
 });

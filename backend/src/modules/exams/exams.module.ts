@@ -3,6 +3,8 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { Exam } from './entities/exam.entity';
 import { PatientsModule } from '../patients/patients.module';
 import { UsersModule } from '../users/users.module';
+import { ExamsController } from './controllers/exams.controller';
+import { ExamsService } from './services/exams.service';
 
 
 @Module({
@@ -11,8 +13,8 @@ import { UsersModule } from '../users/users.module';
     PatientsModule,
     UsersModule,
   ],
-  controllers: [],
-  providers: [],
-  exports: [SequelizeModule],
+  controllers: [ExamsController],
+  providers: [ExamsService],
+  exports: [SequelizeModule, ExamsService],
 })
 export class ExamsModule {}

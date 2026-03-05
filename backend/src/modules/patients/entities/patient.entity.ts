@@ -38,6 +38,12 @@ export class Patient extends Model<Patient> {
   @Column({ type: DataType.JSONB, allowNull: true })
   declare address: any;
 
+  @Column({ type: DataType.STRING(100), allowNull: true })
+  declare insurance_provider: string;
+
+  @Column({ type: DataType.STRING(50), allowNull: true })
+  declare insurance_number: string;
+
   @CreatedAt
   declare created_at: Date;
 
