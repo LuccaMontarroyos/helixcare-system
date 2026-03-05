@@ -12,6 +12,8 @@ import { PatientsService } from '../../patients/services/patients.service';
 import { AppointmentsService } from '../../appointments/services/appointments.service';
 import { ExamsService } from '../../exams/services/exams.service';
 import { Patient } from '../../patients/entities/patient.entity';
+import { Appointment } from '../../appointments/entities/appointment.entity';
+import { Exam } from '../../exams/entities/exam.entity';
 
 @Injectable()
 export class BillingService {
@@ -79,7 +81,10 @@ export class BillingService {
     const { rows, count } = await this.invoiceModel.findAndCountAll({
       where: whereClause,
       include: [
-        { model: Patient, attributes: ['id', 'name', 'cpf', 'insurance_provider', 'insurance_number'] }
+        { model: Patient, attributes: ['id', 'name', 'cpf', 'insurance_provider', 'insurance_number'] },
+        { model: Appointment, attributes: ['id', 'appointment_date', 'status'] },
+        { model: Exam, attributes: ['id', 'exam_type', 'status'] },
+        
       ],
       order: [['due_date', 'ASC'], ['created_at', 'DESC']],
       limit,
