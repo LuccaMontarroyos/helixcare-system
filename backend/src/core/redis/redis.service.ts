@@ -35,4 +35,15 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async del(key: string): Promise<void> {
     await this.redisClient.del(key);
   }
+
+  async incrementAndExpire(key: string, ttlSeconds: number): Promise<number> {
+  
+    const count = await this.redisClient.incr(key);
+  
+    if (count === 1) {
+      await this.redisClient.expire(key, ttlSeconds);
+    }
+    
+    return count;
+  }
 }
