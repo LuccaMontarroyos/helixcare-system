@@ -12,6 +12,7 @@ import { RedisModule } from './core/redis/redis.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { ExamsModule } from './modules/exams/exams.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { CloudService } from './core/cloud/cloud.service';
 
 @Module({
   imports: [

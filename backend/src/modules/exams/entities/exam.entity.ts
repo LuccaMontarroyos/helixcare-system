@@ -54,6 +54,9 @@ export class Exam extends Model<Exam> {
   })
   declare status: ExamStatusEnum;
 
+  @Column({ type: DataType.STRING(500), allowNull: true })
+  declare result_file_url: string;
+
   @CreatedAt
   declare created_at: Date;
 

@@ -5,6 +5,7 @@ import { PatientsModule } from '../patients/patients.module';
 import { UsersModule } from '../users/users.module';
 import { ExamsController } from './controllers/exams.controller';
 import { ExamsService } from './services/exams.service';
+import { CloudService } from 'src/core/cloud/cloud.service';
 
 
 @Module({
@@ -14,7 +15,7 @@ import { ExamsService } from './services/exams.service';
     UsersModule,
   ],
   controllers: [ExamsController],
-  providers: [ExamsService],
+  providers: [ExamsService, CloudService],
   exports: [SequelizeModule, ExamsService],
 })
 export class ExamsModule {}

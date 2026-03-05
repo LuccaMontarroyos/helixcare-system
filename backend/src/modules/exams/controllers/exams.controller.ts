@@ -1,5 +1,5 @@
-import { Controller, Post, Get, Put, Delete, Body, Param, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { Controller, Post, Get, Put, Delete, Body, Param, Query, UseGuards, HttpCode, HttpStatus, UseInterceptors, UploadedFile, BadRequestException, } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { ExamsService } from '../services/exams.service';
 import { CreateExamDto } from '../dto/create-exam.dto';
 import { UpdateExamResultDto } from '../dto/update-exam-result.dto';
@@ -14,12 +14,15 @@ import { YupValidationPipe } from '../../../core/pipes/yup-validation.pipe';
 import { CurrentUser } from '../../../core/decorators/current-user.decorator';
 import type { ICurrentUser } from '../../auth/interfaces/current-user.interface';
 
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+
 @ApiTags('Exams (Laboratório)')
 @ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('exams')
 export class ExamsController {
-  constructor(private readonly examsService: ExamsService) {}
+  constructor(private readonly examsService: ExamsService) { }
 
   @Post()
   @ApiOperation({ summary: 'Solicita um novo exame (Apenas Médicos)' })
@@ -79,9 +82,43 @@ export class ExamsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cancela/Remove um pedido de exame (Soft Delete)' })
   @Roles(RoleEnum.ADMIN, RoleEnum.DOCTOR)
-  
+
   async remove(@Param('id') id: string) {
     await this.examsService.remove(id);
     return { message: 'Exame removido com sucesso.' };
+  }
+
+  @Post(':id/upload')
+  @ApiOperation({ summary: 'Faz o upload do laudo para a nuvem (Apenas Técnicos)' })
+  @Roles(RoleEnum.LAB_TECHNICIAN, RoleEnum.ADMIN)
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary', description: 'Arquivo PDF, PNG ou JPG (Max: 5MB)' },
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file', {
+    storage: memoryStorage(),
+    fileFilter: (req, file, cb) => {
+      if (!file.mimetype.match(/\/(pdf|jpeg|png)$/)) {
+        return cb(new BadRequestException('Apenas arquivos PDF, PNG e JPEG são permitidos!'), false);
+      }
+      cb(null, true);
+    },
+    limits: { fileSize: 5 * 1024 * 1024 }
+  }))
+  async uploadFile(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: ICurrentUser,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Nenhum arquivo foi enviado.');
+    }
+
+    return await this.examsService.uploadResultFile(id, user.id, file);
   }
 }

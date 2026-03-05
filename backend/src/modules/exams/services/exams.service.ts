@@ -11,6 +11,7 @@ import { PatientsService } from '../../patients/services/patients.service';
 import { UsersService } from '../../users/services/users.service';
 import { RoleEnum } from '../../roles/enums/roles.enum';
 import { User } from '../../users/entities/user.entity';
+import { CloudService } from 'src/core/cloud/cloud.service';
 
 @Injectable()
 export class ExamsService {
@@ -20,6 +21,7 @@ export class ExamsService {
     private sequelize: Sequelize,
     private patientsService: PatientsService,
     private usersService: UsersService,
+    private cloudService: CloudService,
   ) {}
 
   async create(doctorId: string, dto: CreateExamDto): Promise<Exam> {
@@ -123,5 +125,31 @@ export class ExamsService {
     }
 
     await exam.destroy();
+  }
+
+  async uploadResultFile(id: string, technicianId: string, file: Express.Multer.File): Promise<Exam> {
+    const exam = await this.findOne(id);
+
+    if (exam.status === ExamStatusEnum.REQUESTED || exam.status === ExamStatusEnum.CANCELED) {
+      throw new BadRequestException('Você só pode anexar arquivos em exames em andamento ou finalizados.');
+    }
+    if (exam.lab_technician_id !== technicianId) {
+      throw new ForbiddenException('Apenas o técnico responsável pode anexar o arquivo de laudo.');
+    }
+
+    const fileUrl = await this.cloudService.uploadFile(file);
+
+    const transaction = await this.sequelize.transaction();
+    try {
+      const updatedExam = await exam.update(
+        { result_file_url: fileUrl },
+        { transaction }
+      );
+      await transaction.commit();
+      return updatedExam;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 }
