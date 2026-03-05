@@ -5,10 +5,12 @@ import { Appointment } from '../appointments/entities/appointment.entity';
 import { Exam } from '../exams/entities/exam.entity';
 import { AnalyticsController } from './controllers/analytics.controller';
 import { AnalyticsService } from './services/analytics.service';
+import { RedisModule } from 'src/core/redis/redis.module';
 
 @Module({
   imports: [
     SequelizeModule.forFeature([Invoice, Appointment, Exam]),
+    RedisModule,
   ],
   controllers: [AnalyticsController],
   providers: [AnalyticsService],
