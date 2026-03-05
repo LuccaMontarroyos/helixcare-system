@@ -13,6 +13,7 @@ import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { ExamsModule } from './modules/exams/exams.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { CloudService } from './core/cloud/cloud.service';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { CloudService } from './core/cloud/cloud.service';
     AppointmentsModule,
     ExamsModule,
     BillingModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
