@@ -1,5 +1,6 @@
-import { Controller, Post, Put, Get, Delete, Param, Query, Body, UseGuards, UsePipes, ConflictException, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { Controller, Post, Put, Get, Delete, Param, Query, Body, UseGuards, UsePipes, ConflictException, HttpCode, HttpStatus, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { MedicalRecordsService } from '../services/medical-records.service';
 import { CreateMedicalRecordDto } from '../dto/create-medical-record.dto';
 import { UpdateMedicalRecordDto } from '../dto/update-medical-record.dto';
@@ -13,13 +14,14 @@ import { YupValidationPipe } from '../../../core/pipes/yup-validation.pipe';
 import { CurrentUser } from '../../../core/decorators/current-user.decorator';
 import { RedisLockService } from 'src/core/redis/redis-lock.service';
 import type { ICurrentUser } from '../..//auth/interfaces/current-user.interface';
+import { memoryStorage } from 'multer';
 
 @ApiTags('Medical Records')
 @ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('medical-records')
 export class MedicalRecordsController {
-  constructor(private readonly medicalRecordsService: MedicalRecordsService, private readonly redisLockService: RedisLockService) {}
+  constructor(private readonly medicalRecordsService: MedicalRecordsService, private readonly redisLockService: RedisLockService) { }
 
   @Post()
   @ApiOperation({ summary: 'Cria uma nova evolução/prontuário para um paciente' })
@@ -51,11 +53,11 @@ export class MedicalRecordsController {
     @Query('diagnosis') diagnosis?: string,
   ) {
     const filters = {
-        doctor_id: doctorId,
-        start_date: startDate,
-        end_date: endDate,
-        diagnosis,
-      };
+      doctor_id: doctorId,
+      start_date: startDate,
+      end_date: endDate,
+      diagnosis,
+    };
 
     return await this.medicalRecordsService.findAllByPatient(patientId, page || 1, limit || 10, filters);
   }
@@ -111,5 +113,31 @@ export class MedicalRecordsController {
   ) {
     await this.medicalRecordsService.remove(id, user.id, user.role);
     return { message: 'Prontuário removido com sucesso.' };
+  }
+
+  @Post(':id/upload')
+  @ApiOperation({ summary: 'Anexa PDFs ou Imagens externas ao prontuário (Apenas Médicos)' })
+  @Roles(RoleEnum.DOCTOR)
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: { type: 'object', properties: { file: { type: 'string', format: 'binary', description: 'PDF ou Imagem (Max: 10MB)' } } },
+  })
+  @UseInterceptors(FileInterceptor('file', {
+    storage: memoryStorage(),
+    fileFilter: (req, file, cb) => {
+      if (!file.mimetype.match(/\/(pdf|jpeg|png|jpg)$/)) {
+        return cb(new BadRequestException('Apenas arquivos PDF, PNG e JPEG são permitidos!'), false);
+      }
+      cb(null, true);
+    },
+    limits: { fileSize: 10 * 1024 * 1024 }
+  }))
+  async uploadAttachment(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: ICurrentUser,
+  ) {
+    if (!file) throw new BadRequestException('Nenhum arquivo foi enviado.');
+    return await this.medicalRecordsService.uploadAttachment(id, user.id, file);
   }
 }

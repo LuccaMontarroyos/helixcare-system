@@ -44,6 +44,9 @@ export class Patient extends Model<Patient> {
   @Column({ type: DataType.STRING(50), allowNull: true })
   declare insurance_number: string;
 
+  @Column({ type: DataType.STRING(500), allowNull: true })
+  declare avatar_url: string;
+
   @CreatedAt
   declare created_at: Date;
 

@@ -5,6 +5,7 @@ import { MedicalRecordsController } from './controllers/medical-records.controll
 import { MedicalRecordsService } from './services/medical-records.service';
 import { PatientsModule } from '../patients/patients.module';
 import { MedicalRecordHistory } from './entities/medical-record.history.entity';
+import { CloudService } from 'src/core/cloud/cloud.service';
 
 @Module({
   imports: [
@@ -12,6 +13,6 @@ import { MedicalRecordHistory } from './entities/medical-record.history.entity';
     PatientsModule,
   ],
   controllers: [MedicalRecordsController],
-  providers: [MedicalRecordsService],
+  providers: [MedicalRecordsService, CloudService],
 })
 export class MedicalRecordsModule {}

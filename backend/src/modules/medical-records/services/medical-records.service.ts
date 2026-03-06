@@ -10,6 +10,7 @@ import { RoleEnum } from '../../roles/enums/roles.enum';
 import { UpdateMedicalRecordDto } from '../dto/update-medical-record.dto';
 import { RedisLockService } from '../../../core/redis/redis-lock.service';
 import { MedicalRecordHistory } from '../entities/medical-record.history.entity';
+import { CloudService } from 'src/core/cloud/cloud.service';
 
 @Injectable()
 export class MedicalRecordsService {
@@ -21,6 +22,7 @@ export class MedicalRecordsService {
     private sequelize: Sequelize,
     private patientsService: PatientsService, 
     private redisLockService: RedisLockService,
+    private cloudService: CloudService,
 
   ) {}
 
@@ -149,5 +151,20 @@ export class MedicalRecordsService {
     }
 
     await record.destroy();
+  }
+
+  async uploadAttachment(id: string, doctorId: string, file: Express.Multer.File): Promise<MedicalRecord> {
+    const record = await this.findOne(id);
+
+    if (record.doctor_id !== doctorId) {
+      throw new ForbiddenException('Apenas o médico responsável por este atendimento pode anexar documentos.');
+    }
+
+    const fileUrl = await this.cloudService.uploadFile(file);
+
+    const currentAttachments = record.attachments || [];
+    const updatedAttachments = [...currentAttachments, fileUrl];
+
+    return await record.update({ attachments: updatedAttachments });
   }
 }

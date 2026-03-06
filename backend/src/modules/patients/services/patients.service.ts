@@ -5,6 +5,7 @@ import { CreationAttributes } from 'sequelize';
 import { Patient } from '../entities/patient.entity';
 import { CreatePatientDto } from '../dto/create-patient.dto';
 import { UpdatePatientDto } from '../dto/update-patient.dto';
+import { CloudService } from 'src/core/cloud/cloud.service';
 
 @Injectable()
 export class PatientsService {
@@ -12,6 +13,7 @@ export class PatientsService {
     @InjectModel(Patient)
     private patientModel: typeof Patient,
     private sequelize: Sequelize,
+    private cloudService: CloudService,
   ) {}
 
   async create(dto: CreatePatientDto): Promise<Patient> {
@@ -78,5 +80,13 @@ export class PatientsService {
     const patient = await this.findOne(id);
     
     await patient.destroy();
+  }
+
+  async uploadAvatar(id: string, file: Express.Multer.File): Promise<Patient> {
+    const patient = await this.findOne(id);
+
+    const fileUrl = await this.cloudService.uploadFile(file);
+
+    return await patient.update({ avatar_url: fileUrl });
   }
 }

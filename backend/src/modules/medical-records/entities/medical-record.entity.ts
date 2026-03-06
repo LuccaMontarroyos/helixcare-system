@@ -48,6 +48,9 @@ export class MedicalRecord extends Model<MedicalRecord> {
   @Column({ type: DataType.JSONB, allowNull: true })
   declare social_history: SocialHistory;
 
+  @Column({ type: DataType.ARRAY(DataType.STRING(500)), allowNull: true, defaultValue: [] })
+  declare attachments: string[];
+
   @CreatedAt
   declare created_at: Date;
 
