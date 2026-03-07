@@ -5,6 +5,15 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './modules/users/users.module';
 import { RolesModule } from './modules/roles/roles.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { PatientsModule } from './modules/patients/patients.module';
+import { MedicalRecordsModule } from './modules/medical-records/medical-records.module';
+import { RedisModule } from './core/redis/redis.module';
+import { AppointmentsModule } from './modules/appointments/appointments.module';
+import { ExamsModule } from './modules/exams/exams.module';
+import { BillingModule } from './modules/billing/billing.module';
+import { CloudService } from './core/cloud/cloud.service';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -42,6 +51,13 @@ import { RolesModule } from './modules/roles/roles.module';
     UsersModule,
     RolesModule,
     AuthModule,
+    PatientsModule,
+    MedicalRecordsModule,
+    RedisModule,
+    AppointmentsModule,
+    ExamsModule,
+    BillingModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

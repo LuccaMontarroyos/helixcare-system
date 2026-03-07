@@ -1,0 +1,59 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { CreationAttributes } from 'sequelize';
+import { User } from '../entities/user.entity';
+import { Role } from '../../roles/entities/role.entity';
+import { UpdateUserDto } from '../dto/update-user.dto';
+
+@Injectable()
+export class UsersService {
+  constructor(
+    @InjectModel(User) private userModel: typeof User,
+    private sequelize: Sequelize,
+  ) {}
+
+  async findAll(): Promise<Omit<User, 'password_hash'>[]> {
+    const users = await this.userModel.findAll({
+      attributes: { exclude: ['password_hash'] },
+      include: [{ model: Role, attributes: ['id', 'name'] }],
+      order: [['created_at', 'DESC']],
+    });
+    return users as unknown as Omit<User, 'password_hash'>[];
+  }
+
+  async findOne(id: string): Promise<Omit<User, 'password_hash'>> {
+    const user = await this.userModel.findByPk(id, {
+      attributes: { exclude: ['password_hash'] },
+      include: [{ model: Role, attributes: ['id', 'name'] }],
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+    return user as unknown as Omit<User, 'password_hash'>;
+  }
+
+  async update(id: string, dto: UpdateUserDto): Promise<Omit<User, 'password_hash'>> {
+    const user = await this.userModel.findByPk(id);
+    if (!user) throw new NotFoundException('Usuário não encontrado.');
+
+    const transaction = await this.sequelize.transaction();
+    try {
+      await user.update(dto as Partial<CreationAttributes<User>>, { transaction });
+      await transaction.commit();
+      
+      return this.findOne(id);
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async remove(id: string): Promise<void> {
+    const user = await this.userModel.findByPk(id);
+    if (!user) throw new NotFoundException('Usuário não encontrado.');
+    
+    await user.destroy();
+  }
+}

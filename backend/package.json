@@ -30,6 +30,7 @@
     "@nestjs/swagger": "github:nestjs/swagger",
     "argon2": "^0.44.0",
     "ioredis": "^5.9.3",
+    "multer": "^2.1.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.19.0",
@@ -38,7 +39,9 @@
     "rxjs": "^7.8.1",
     "sequelize": "^6.37.7",
     "sequelize-typescript": "^2.1.6",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "uploadthing": "^7.7.4",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -48,9 +51,11 @@
     "@nestjs/testing": "^11.0.1",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
+    "@types/multer": "^2.0.0",
     "@types/node": "^22.10.7",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",
+    "@types/yup": "^0.29.14",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
