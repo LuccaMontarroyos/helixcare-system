@@ -1,5 +1,5 @@
 angular.module('helixcare.auth')
-.controller('LoginController', ['$scope', '$state', 'AuthService', function($scope, $state, AuthService) {
+.controller('LoginController', ['$scope', '$state', 'AuthService', 'ToastService', function($scope, $state, AuthService, ToastService) {
     
     $scope.credentials = {
         email: '',
@@ -7,24 +7,28 @@ angular.module('helixcare.auth')
     };
     
     $scope.isLoading = false;
-    $scope.errorMessage = null;
 
     $scope.submitLogin = function() {
         if (!$scope.credentials.email || !$scope.credentials.password) {
-            $scope.errorMessage = "Por favor, preencha todos os campos.";
+            ToastService.warning("Por favor, preencha todos os campos.", "Campos Vazios");
             return;
         }
 
         $scope.isLoading = true;
-        $scope.errorMessage = null;
 
         AuthService.login($scope.credentials)
             .then(function(user) {
-                console.log("Bem-vindo, " + user.role);
+                ToastService.success("Autenticação realizada com sucesso.", "Bem-vindo");
                 $state.go('dashboard');
             })
             .catch(function(error) {
-                $scope.errorMessage = error.message || "Credenciais inválidas. Tente novamente.";
+                if (!error) {
+                    ToastService.error("Servidor indisponível. Verifique sua conexão ou se a API está online.", "Falha de Rede");
+                    return;
+                }
+
+                var msg = error.message || error.error || "Credenciais inválidas. Tente novamente.";
+                ToastService.error(msg, "Falha no Login");
             })
             .finally(function() {
                 $scope.isLoading = false;

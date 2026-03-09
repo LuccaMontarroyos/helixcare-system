@@ -1,21 +1,59 @@
 <!DOCTYPE html>
-<html lang="pt-BR" ng-app="helixcareApp">
+<html lang="pt-br" ng-app="helixcare">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Helixcare EHR - Portal</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Helixcare - Sistema de Gestão</title>
     
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="./assets/css/style.css">
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#24aceb",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111c21",
+                    },
+                    fontFamily: { "display": ["Inter", "sans-serif"] }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .ng-hide-add, .ng-hide-remove { transition: all linear 0.2s; }
+        .ng-hide { opacity: 0; transform: scale(0.95); }
+    </style>
 </head>
-<body class="bg-light">
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 flex h-screen overflow-hidden">
 
-    <div ui-view></div>
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <main class="flex-1 overflow-y-auto p-8 relative">
+            
+            <div ui-view></div>
+
+        </main>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.7/angular.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.15/angular-ui-router.min.js"></script>
-
-    <script src="app.js"></script>
-
-    </body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.13/angular-ui-router.min.js"></script>
+    
+    <script src="app.module.js"></script>
+    <script src="app.config.js"></script>
+    <script src="app.run.js"></script> 
+    <script src="modules/auth/auth.module.js"></script>
+    <script src="modules/auth/auth.service.js"></script>
+    <script src="modules/auth/login.controller.js"></script>
+    <script src="modules/patients/patients.module.js"></script>
+    <script src="modules/patients/patients.service.js"></script>
+    <script src="modules/patients/controllers/patient-list.controller.js"></script>
+    <script src="shared/services/toast.service.js"></script>
+    <script src="shared/components/hc-toast.directive.js"></script>
+</body>
 </html>

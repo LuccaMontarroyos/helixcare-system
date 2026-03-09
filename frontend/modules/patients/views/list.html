@@ -1,0 +1,126 @@
+<div class="mb-8 flex justify-between items-end">
+    <div>
+        <h1 class="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Gestão de Pacientes</h1>
+        <p class="text-slate-500 mt-1">Visualize e gerencie todos os prontuários ativos no sistema.</p>
+    </div>
+    
+    <button hc-has-role="['ADMIN', 'RECEPTIONIST']" ng-click="openModal()" class="bg-primary text-white text-sm font-bold py-2 px-5 rounded-lg flex items-center gap-2 shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-base font-bold">add</span>
+        Novo Paciente
+    </button>
+</div>
+
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                    <th class="px-6 py-4">Paciente</th>
+                    <th class="px-6 py-4">Contato</th>
+                    <th class="px-6 py-4">Status</th>
+                    <th class="px-6 py-4 text-right">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                <tr ng-repeat="patient in patients" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors group">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="size-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-primary">
+                                {{ patient.name.charAt(0) }}
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ patient.name }}</span>
+                                <span class="text-xs text-slate-500">CPF: {{ patient.document }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex flex-col">
+                            <span class="text-sm text-slate-600 dark:text-slate-400">{{ patient.email || 'Sem email' }}</span>
+                            <span class="text-xs text-slate-500">{{ patient.phone }}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                            <span class="size-1.5 rounded-full bg-emerald-500"></span> Ativo
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button class="p-2 text-slate-400 hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
+                            <span class="material-symbols-outlined text-lg">visibility</span>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div ng-show="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" id="modalNovoPaciente">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+        
+        <div class="flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-slate-800">
+            <h3 class="text-xl font-bold">Novo Paciente</h3>
+            <button ng-click="closeModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <div class="px-8 py-6 overflow-y-auto">
+            <form ng-submit="savePatient()" class="space-y-8">
+                
+                <div class="flex flex-col items-center gap-4">
+                    <div class="relative group cursor-pointer" ng-click="triggerFileInput()">
+                        <div class="size-24 rounded-full bg-slate-100 flex items-center justify-center border-2 border-dashed border-slate-300 overflow-hidden">
+                            <span class="material-symbols-outlined text-slate-400 text-3xl">add_a_photo</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500">Foto (Implementaremos o upload na próxima etapa)</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold uppercase text-slate-500 tracking-wider">Nome Completo *</label>
+                        <input ng-model="patientForm.name" required class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" type="text"/>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold uppercase text-slate-500 tracking-wider">CPF *</label>
+                        <input ng-model="patientForm.document" required class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50" type="text"/>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold uppercase text-slate-500 tracking-wider">Data de Nascimento</label>
+                        <input ng-model="patientForm.birthDate" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50" type="date"/>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold uppercase text-slate-500 tracking-wider">Telefone *</label>
+                        <input ng-model="patientForm.phone" required class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50" type="tel"/>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold uppercase text-slate-500 tracking-wider">Plano de Saúde</label>
+                        <select ng-model="patientForm.healthInsurance" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50">
+                            <option value="">Particular (Sem convênio)</option>
+                            <option value="unimed">Unimed</option>
+                            <option value="bradesco">Bradesco Saúde</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-2" ng-show="patientForm.healthInsurance">
+                        <label class="text-xs font-bold uppercase text-slate-500 tracking-wider">Número da Carteirinha</label>
+                        <input ng-model="patientForm.insuranceNumber" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50" type="text"/>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-bold uppercase text-slate-500 tracking-wider">Observações</label>
+                    <textarea ng-model="patientForm.notes" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 resize-none" rows="3"></textarea>
+                </div>
+
+                <div class="border-t border-slate-100 pt-6 flex justify-end gap-3">
+                    <button type="button" ng-click="closeModal()" class="px-6 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors">Cancelar</button>
+                    <button type="submit" ng-disabled="isSaving" class="bg-primary text-white text-sm font-bold py-2.5 px-8 rounded-xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
+                        {{ isSaving ? 'Salvando...' : 'Salvar Cadastro' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

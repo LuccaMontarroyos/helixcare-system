@@ -78,6 +78,15 @@ angular
                 requireAuth: true,
                 allowedRoles: ['ADMIN', 'LAB_TECHNICIAN'] 
             }
-        });
+        })
+        .state('patients', {
+          url: '/patients',
+          templateUrl: 'modules/patients/views/list.html',
+          controller: 'PatientListController',
+          data: { 
+              requireAuth: true,
+              allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE'] 
+          }
+      });
     },
   ]);
