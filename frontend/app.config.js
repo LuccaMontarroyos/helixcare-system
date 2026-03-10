@@ -61,32 +61,47 @@ angular
             ],
           },
         })
-        .state('billing', {
-            url: '/billing',
-            templateUrl: 'modules/billing/views/billing.html',
-            controller: 'BillingController',
-            data: { 
-                requireAuth: true,
-                allowedRoles: ['ADMIN', 'RECEPTIONIST'] 
-            }
+        .state("billing", {
+          url: "/billing",
+          templateUrl: "modules/billing/views/billing.html",
+          controller: "BillingController",
+          data: {
+            requireAuth: true,
+            allowedRoles: ["ADMIN", "RECEPTIONIST"],
+          },
         })
-        .state('exams-laboratory', {
-            url: '/exams/lab',
-            templateUrl: 'modules/exams/views/lab-board.html',
-            controller: 'LabController',
-            data: { 
-                requireAuth: true,
-                allowedRoles: ['ADMIN', 'LAB_TECHNICIAN'] 
-            }
+        .state("exams-laboratory", {
+          url: "/exams/lab",
+          templateUrl: "modules/exams/views/lab-board.html",
+          controller: "LabController",
+          data: {
+            requireAuth: true,
+            allowedRoles: ["ADMIN", "LAB_TECHNICIAN"],
+          },
         })
-        .state('patients', {
-          url: '/patients',
-          templateUrl: 'modules/patients/views/list.html',
-          controller: 'PatientListController',
-          data: { 
-              requireAuth: true,
-              allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE'] 
-          }
-      });
+        .state("patients", {
+          url: "/patients",
+          templateUrl: "modules/patients/views/list.html",
+          controller: "PatientListController",
+          data: {
+            requireAuth: true,
+            allowedRoles: ["ADMIN", "RECEPTIONIST", "DOCTOR", "NURSE"],
+          },
+        })
+        .state("patient-detail", {
+          url: "/patients/:id",
+          templateUrl: "modules/patients/views/detail.html",
+          controller: "PatientDetailController",
+          data: {
+            requireAuth: true,
+            allowedRoles: [
+              "ADMIN",
+              "RECEPTIONIST",
+              "DOCTOR",
+              "NURSE",
+              "LAB_TECHNICIAN",
+            ],
+          },
+        });
     },
   ]);

@@ -39,4 +39,12 @@ angular.module('helixcare.patients')
 
         return deferred.promise;
     };
+    
+    this.getPatientById = function(id) {
+        var deferred = $q.defer();
+        $http.get(API_URL + '/' + id)
+            .then(function(response) { deferred.resolve(response.data); })
+            .catch(function(error) { deferred.reject(error.data || error); });
+        return deferred.promise;
+    };
 }]);

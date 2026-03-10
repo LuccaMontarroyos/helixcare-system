@@ -151,13 +151,8 @@ angular.module("helixcare.patients").controller("PatientListController", [
         });
     };
 
-    $scope.goToPatient = function (patient) {
-      ToastService.info(
-        "A Visão 360º do paciente " +
-          patient.name.split(" ")[0] +
-          " será implementada no próximo módulo.",
-        "Em breve",
-      );
+    $scope.goToPatient = function(patient) {
+        $state.go('patient-detail', { id: patient.id });
     };
 
     $scope.init();
