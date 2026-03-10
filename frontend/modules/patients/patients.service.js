@@ -15,4 +15,28 @@ angular.module('helixcare.patients')
 
         return deferred.promise;
     };
+
+    this.createPatient = function(patientData) {
+        var deferred = $q.defer();
+        $http.post(API_URL, patientData)
+            .then(function(response) { deferred.resolve(response.data); })
+            .catch(function(error) { deferred.reject(error.data || error); });
+        return deferred.promise;
+    };
+
+    this.uploadAvatar = function(patientId, file) {
+        var deferred = $q.defer();
+        
+        var formData = new FormData();
+        formData.append('file', file);
+
+        $http.post(API_URL + '/' + patientId + '/avatar', formData, {
+            transformRequest: angular.identity,
+            headers: { 'Content-Type': undefined }
+        })
+        .then(function(response) { deferred.resolve(response.data); })
+        .catch(function(error) { deferred.reject(error.data || error); });
+
+        return deferred.promise;
+    };
 }]);

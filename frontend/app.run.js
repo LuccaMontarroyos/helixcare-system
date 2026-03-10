@@ -15,7 +15,7 @@ angular.module('helixcare')
 
         if (toState.name === 'login' && isAuthenticated) {
             event.preventDefault();
-            $state.go('dashboard');
+            $state.go('patients');
             return;
         }
 
@@ -26,7 +26,7 @@ angular.module('helixcare')
                 
                 if (fromState.name && fromState.name !== '^') {
                 } else {
-                    $state.go('dashboard');
+                    $state.go('patients');
                 }
             }
         }
