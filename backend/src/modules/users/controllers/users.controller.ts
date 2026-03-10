@@ -1,5 +1,5 @@
-import { Controller, Get, Put, Delete, Param, Body, UseGuards, UsePipes } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Put, Delete, Param, Body, UseGuards, UsePipes, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { UsersService } from '../services/users.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { updateUserSchema } from '../schemas/update-user.schema';
@@ -14,13 +14,14 @@ import { YupValidationPipe } from '../../../core/pipes/yup-validation.pipe';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Get()
   @ApiOperation({ summary: 'Lista todos os funcionários (Médicos, Enfermeiros, etc.)' })
-  @Roles(RoleEnum.ADMIN, RoleEnum.RECEPTIONIST) 
-  async findAll() {
-    return await this.usersService.findAll();
+  @ApiQuery({ name: 'search', required: false, type: String, description: 'Nome ou email do funcionário' })
+  @Roles(RoleEnum.ADMIN, RoleEnum.RECEPTIONIST)
+  async findAll(@Query('search') search: string) {
+    return await this.usersService.findAll(search);
   }
 
   @Get(':id')

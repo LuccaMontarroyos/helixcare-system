@@ -1,5 +1,5 @@
-import { Controller, Post, Get, Put, Delete, Param, Body, UseGuards, UsePipes, BadRequestException, UploadedFile, UseInterceptors } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { Controller, Post, Get, Put, Delete, Param, Body, UseGuards, UsePipes, BadRequestException, UploadedFile, UseInterceptors, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiConsumes, ApiQuery } from '@nestjs/swagger';
 import { PatientsService } from '../services/patients.service';
 import { CreatePatientDto } from '../dto/create-patient.dto';
 import { createPatientSchema } from '../schemas/create-patient.schema';
@@ -40,9 +40,10 @@ export class PatientsController {
 
   @Get()
   @ApiOperation({ summary: 'Lista todos os pacientes' })
+  @ApiQuery({ name: 'search', required: false, type: String, description: 'Nome ou CPF do paciente' })
   @Roles(RoleEnum.ADMIN, RoleEnum.RECEPTIONIST, RoleEnum.DOCTOR, RoleEnum.NURSE)
-  async findAll() {
-    return await this.patientsService.findAll();
+  async findAll(@Query('search') search: string) {
+    return await this.patientsService.findAll(search);
   }
 
   @Get(':id')

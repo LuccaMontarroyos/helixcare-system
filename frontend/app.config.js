@@ -102,6 +102,15 @@ angular
               "LAB_TECHNICIAN",
             ],
           },
-        });
+        })
+        .state('appointments', {
+          url: '/appointments',
+          templateUrl: 'modules/appointments/views/list.html',
+          controller: 'AppointmentsController',
+          data: { 
+              requireAuth: true, 
+              allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE', 'LAB_TECHNICIAN'] 
+          }
+      });;
     },
   ]);
