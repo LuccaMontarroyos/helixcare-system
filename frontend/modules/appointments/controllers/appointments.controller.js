@@ -1,9 +1,11 @@
 angular.module('helixcare.appointments')
 .controller('AppointmentsController', [
-    '$scope', 
-    'AppointmentsService', 
+    '$scope',
+    '$filter',
+    'AppointmentsService',
+    'PatientsService',
     'ToastService',
-    function($scope, AppointmentsService, ToastService) {
+    function($scope, $filter, AppointmentsService, PatientsService, ToastService) {
         
         $scope.appointments = [];
         $scope.isLoading = true;
@@ -22,12 +24,30 @@ angular.module('helixcare.appointments')
             totalPages: 1
         };
 
+        $scope.typeahead = {
+            patient: { term: '', results: [], isOpen: false, loading: false },
+            doctor:  { term: '', results: [], isOpen: false, loading: false }
+        };
+
         $scope.init = function() {
             $scope.loadAppointments();
         };
 
         $scope.applyFilters = function() {
             $scope.filters.page = 1;
+            $scope.loadAppointments();
+        };
+
+        $scope.clearFilters = function() {
+            $scope.filters.page = 1;
+            $scope.filters.status = '';
+            $scope.filters.date = null;
+            $scope.filters.patient_id = '';
+            $scope.filters.doctor_id = '';
+            
+            $scope.typeahead.patient.term = '';
+            $scope.typeahead.doctor.term = '';
+            
             $scope.loadAppointments();
         };
 
@@ -47,6 +67,7 @@ angular.module('helixcare.appointments')
             
             if (queryParams.date) { queryParams.date = formatDateToISO(queryParams.date); }
             else { delete queryParams.date; }
+            
             if (!queryParams.status) delete queryParams.status;
             if (!queryParams.patient_id) delete queryParams.patient_id;
             if (!queryParams.doctor_id) delete queryParams.doctor_id;
@@ -59,7 +80,6 @@ angular.module('helixcare.appointments')
                         $scope.pagination.totalItems = res.meta.totalItems || res.meta.total;
                         $scope.pagination.totalPages = res.meta.totalPages || res.meta.last_page;
                     } else {
-                        // Fallback caso sua API retorne apenas o Array
                         $scope.pagination.totalItems = $scope.appointments.length;
                         $scope.pagination.totalPages = 1;
                     }
@@ -128,6 +148,71 @@ angular.module('helixcare.appointments')
                 'CANCELED': { class: 'bg-danger/15 text-danger', icon: 'cancel', text: 'Cancelado' }
             };
             return config[status] || { class: 'bg-slate-100 text-slate-500', icon: 'help', text: status };
+        };
+
+        $scope.searchPatients = function() {
+            $scope.filters.patient_id = null;
+
+            if (!$scope.typeahead.patient.term) {
+                $scope.typeahead.patient.isOpen = false;
+                $scope.applyFilters();
+                return;
+            }
+
+            $scope.typeahead.patient.loading = true;
+            
+            PatientsService.getPatients({ search: $scope.typeahead.patient.term })
+                .then(function(res) {
+                    $scope.typeahead.patient.results = res.items || res.data || res;
+                    $scope.typeahead.patient.isOpen = true;
+                })
+                .finally(function() {
+                    $scope.typeahead.patient.loading = false;
+                });
+        };
+
+        $scope.selectPatient = function(patient) {
+            $scope.filters.patient_id = patient.id;
+            
+            var cpfFormatado = $filter('cpfFilter')(patient.cpf);
+            $scope.typeahead.patient.term = patient.name + ' | CPF: ' + cpfFormatado;            
+
+            $scope.typeahead.patient.isOpen = false;
+            $scope.applyFilters();
+        };
+
+        $scope.searchDoctors = function() {
+            $scope.filters.doctor_id = null;
+
+            if (!$scope.typeahead.doctor.term) {
+                $scope.typeahead.doctor.isOpen = false;
+                $scope.applyFilters();
+                return;
+            }
+
+            $scope.typeahead.doctor.loading = true;
+            
+            AppointmentsService.searchUsers($scope.typeahead.doctor.term)
+                .then(function(res) {
+                    $scope.typeahead.doctor.results = res.items || res.data || res;
+                    $scope.typeahead.doctor.isOpen = true;
+                })
+                .finally(function() {
+                    $scope.typeahead.doctor.loading = false;
+                });
+        };
+
+        $scope.selectDoctor = function(doctor) {
+            $scope.filters.doctor_id = doctor.id;
+            $scope.typeahead.doctor.term = doctor.name + ' | E-mail: ' + doctor.email;
+            
+            $scope.typeahead.doctor.isOpen = false;
+            $scope.applyFilters();
+        };
+
+        $scope.closeTypeaheads = function() {
+            $scope.typeahead.patient.isOpen = false;
+            $scope.typeahead.doctor.isOpen = false;
         };
 
         $scope.init();

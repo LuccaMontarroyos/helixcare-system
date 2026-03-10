@@ -33,4 +33,12 @@ angular.module('helixcare.appointments')
             .catch(function(error) { deferred.reject(error.data || error); });
         return deferred.promise;
     };
+
+    this.searchUsers = function(searchTerm) {
+        var deferred = $q.defer();
+        $http.get('http://localhost:3000/api/v1/users', { params: { search: searchTerm } })
+            .then(function(response) { deferred.resolve(response.data); })
+            .catch(function(error) { deferred.reject(error.data || error); });
+        return deferred.promise;
+    };
 }]);
