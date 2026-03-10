@@ -16,15 +16,15 @@ import { YupValidationPipe } from '../../../core/pipes/yup-validation.pipe';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('appointments')
 export class AppointmentsController {
-  constructor(private readonly appointmentsService: AppointmentsService) {}
+  constructor(private readonly appointmentsService: AppointmentsService) { }
 
   @Post()
   @ApiOperation({ summary: 'Cria um novo agendamento de consulta' })
   @ApiResponse({ status: 201, description: 'Agendamento criado com sucesso.' })
   @ApiResponse({ status: 409, description: 'Conflito de horário (Double Booking).' })
-  @Roles(RoleEnum.ADMIN, RoleEnum.RECEPTIONIST) // Apenas a recepção/admin cria agendas
-  @UsePipes(new YupValidationPipe(createAppointmentSchema))
-  async create(@Body() createAppointmentDto: CreateAppointmentDto) {
+  @Roles(RoleEnum.ADMIN, RoleEnum.RECEPTIONIST)
+  @UsePipes()
+  async create(@Body(new YupValidationPipe(createAppointmentSchema)) createAppointmentDto: CreateAppointmentDto) {
     return await this.appointmentsService.create(createAppointmentDto);
   }
 
@@ -59,10 +59,10 @@ export class AppointmentsController {
   @Put(':id')
   @ApiOperation({ summary: 'Atualiza um agendamento (Ex: remanejar data ou alterar status)' })
   @Roles(RoleEnum.ADMIN, RoleEnum.RECEPTIONIST, RoleEnum.DOCTOR)
-  @UsePipes(new YupValidationPipe(updateAppointmentSchema))
+  @UsePipes()
   async update(
     @Param('id') id: string,
-    @Body() updateAppointmentDto: UpdateAppointmentDto,
+    @Body(new YupValidationPipe(updateAppointmentSchema)) updateAppointmentDto: UpdateAppointmentDto,
   ) {
     return await this.appointmentsService.update(id, updateAppointmentDto);
   }

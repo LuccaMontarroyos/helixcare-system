@@ -26,6 +26,14 @@ angular.module('helixcare.appointments')
         return deferred.promise;
     };
 
+    this.updateAppointment = function(id, payload) {
+        var deferred = $q.defer();
+        $http.put(API_URL + '/' + id, payload)
+            .then(function(response) { deferred.resolve(response.data); })
+            .catch(function(error) { deferred.reject(error.data || error); });
+        return deferred.promise;
+    };
+
     this.deleteAppointment = function(id) {
         var deferred = $q.defer();
         $http.delete(API_URL + '/' + id)
