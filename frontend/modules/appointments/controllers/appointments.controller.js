@@ -49,6 +49,54 @@ angular.module("helixcare.appointments").controller("AppointmentsController", [
             $scope.loadAppointments();
         };
 
+        $scope.searchPatients = function () {
+            if (!$scope.typeahead.patient.term) { 
+                $scope.typeahead.patient.isOpen = false; 
+                $scope.filters.patient_id = "";
+                $scope.applyFilters();
+                return; 
+            }
+            $scope.typeahead.patient.loading = true;
+            
+            PatientsService.getPatients({ search: $scope.typeahead.patient.term })
+                .then(function (res) {
+                    $scope.typeahead.patient.results = res.items || res.data || res;
+                    $scope.typeahead.patient.isOpen = true;
+                })
+                .finally(function () { $scope.typeahead.patient.loading = false; });
+        };
+
+        $scope.selectPatient = function (patient) {
+            $scope.typeahead.patient.term = patient.name;
+            $scope.filters.patient_id = patient.id;
+            $scope.typeahead.patient.isOpen = false;
+            $scope.applyFilters();
+        };
+
+        $scope.searchDoctors = function () {
+            if (!$scope.typeahead.doctor.term) { 
+                $scope.typeahead.doctor.isOpen = false; 
+                $scope.filters.doctor_id = "";
+                $scope.applyFilters();
+                return; 
+            }
+            $scope.typeahead.doctor.loading = true;
+            
+            AppointmentsService.searchUsers($scope.typeahead.doctor.term)
+                .then(function (res) {
+                    $scope.typeahead.doctor.results = res.items || res.data || res;
+                    $scope.typeahead.doctor.isOpen = true;
+                })
+                .finally(function () { $scope.typeahead.doctor.loading = false; });
+        };
+
+        $scope.selectDoctor = function (doctor) {
+            $scope.typeahead.doctor.term = doctor.name;
+            $scope.filters.doctor_id = doctor.id;
+            $scope.typeahead.doctor.isOpen = false;
+            $scope.applyFilters();
+        };
+
         function formatDateToISO(dateObj) {
             if (!dateObj) return null;
             var d = new Date(dateObj);
@@ -138,14 +186,62 @@ angular.module("helixcare.appointments").controller("AppointmentsController", [
                 .catch(function (err) { ToastService.error(err.message || "Erro ao remover."); });
         };
 
-        $scope.isModalOpen = false;
         $scope.isSaving = false;
         $scope.isEditMode = false;
+        $scope.isModalOpen = false;
         $scope.appointmentForm = {};
 
         $scope.modalTypeahead = {
             patient: { term: "", results: [], isOpen: false, loading: false },
             doctor: { term: "", results: [], isOpen: false, loading: false },
+        };
+
+        $scope.openModal = function (appt) {
+            $scope.isSaving = false;
+            $scope.modalTypeahead.patient.results = [];
+            $scope.modalTypeahead.doctor.results = [];
+            $scope.modalTypeahead.patient.isOpen = false;
+            $scope.modalTypeahead.doctor.isOpen = false;
+
+            if (appt) {
+                $scope.isEditMode = true;
+                var d = new Date(appt.appointment_date);
+
+                $scope.appointmentForm = {
+                    id: appt.id,
+                    patient_id: appt.patient.id,
+                    doctor_id: appt.doctor ? appt.doctor.id : null,
+                    date: new Date(d.getFullYear(), d.getMonth(), d.getDate()),
+                    time: ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2),
+                    notes: appt.notes || "",
+                    status: appt.status
+                };
+
+                $scope.modalTypeahead.patient.term = appt.patient.name + " | CPF: " + $filter("cpfFilter")(appt.patient.cpf);
+                if (appt.doctor) {
+                    $scope.modalTypeahead.doctor.term = appt.doctor.name + " | E-mail: " + appt.doctor.email;
+                } else {
+                    $scope.modalTypeahead.doctor.term = "";
+                }
+            } else {
+                $scope.isEditMode = false;
+                $scope.appointmentForm = {
+                    patient_id: null,
+                    doctor_id: null,
+                    date: null,
+                    time: null,
+                    notes: "",
+                    status: "SCHEDULED"
+                };
+                $scope.modalTypeahead.patient.term = "";
+                $scope.modalTypeahead.doctor.term = "";
+            }
+
+            $scope.isModalOpen = true;
+        };
+
+        $scope.closeModal = function () {
+            $scope.isModalOpen = false;
         };
 
         $scope.searchModalPatients = function () {
@@ -186,35 +282,6 @@ angular.module("helixcare.appointments").controller("AppointmentsController", [
             $scope.modalTypeahead.doctor.isOpen = false;
         };
 
-        $scope.openModal = function (appt) {
-            $scope.isSaving = false;
-            $scope.modalTypeahead.patient.term = "";
-            $scope.modalTypeahead.doctor.term = "";
-
-            if (appt) {
-                $scope.isEditMode = true;
-                var d = new Date(appt.appointment_date);
-
-                $scope.appointmentForm = {
-                    id: appt.id,
-                    patient_id: appt.patient.id,
-                    doctor_id: appt.doctor ? appt.doctor.id : null,
-                    date: new Date(d.getFullYear(), d.getMonth(), d.getDate()),
-                    time: new Date(1970, 0, 1, d.getHours(), d.getMinutes()),
-                    notes: appt.notes,
-                    status: appt.status,
-                };
-
-                $scope.modalTypeahead.patient.term = appt.patient.name + " | CPF: " + $filter("cpfFilter")(appt.patient.cpf);
-                if (appt.doctor) { $scope.modalTypeahead.doctor.term = appt.doctor.name + " | E-mail: " + appt.doctor.email; }
-            } else {
-                $scope.isEditMode = false;
-                $scope.appointmentForm = { patient_id: null, doctor_id: null, date: null, time: null, notes: "", status: "SCHEDULED" };
-            }
-            $scope.isModalOpen = true;
-        };
-
-        $scope.closeModal = function () { $scope.isModalOpen = false; };
 
         $scope.saveAppointment = function () {
             if (!$scope.appointmentForm.patient_id || !$scope.appointmentForm.doctor_id || !$scope.appointmentForm.date || !$scope.appointmentForm.time) {
@@ -223,8 +290,17 @@ angular.module("helixcare.appointments").controller("AppointmentsController", [
 
             $scope.isSaving = true;
             var finalDate = new Date($scope.appointmentForm.date);
-            var timeObj = new Date($scope.appointmentForm.time);
-            finalDate.setHours(timeObj.getHours(), timeObj.getMinutes(), 0, 0);
+            var timeVal = $scope.appointmentForm.time;
+
+            if (angular.isString(timeVal)) {
+                var parts = timeVal.split(":");
+                var h = parseInt(parts[0], 10) || 0;
+                var m = parseInt(parts[1], 10) || 0;
+                finalDate.setHours(h, m, 0, 0);
+            } else {
+                var timeObj = new Date(timeVal);
+                finalDate.setHours(timeObj.getHours(), timeObj.getMinutes(), 0, 0);
+            }
 
             var payload = {
                 patient_id: $scope.appointmentForm.patient_id,

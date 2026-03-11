@@ -225,147 +225,103 @@
     </div>
 </div>
 
-<div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity"
-    ng-show="isModalOpen" ng-cloak>
-
+<div class="fixed inset-0 bg-slate-900/65 flex items-center justify-center z-[1000]" ng-show="isModalOpen" ng-cloak>
     <div
-        class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-lg shadow-2xl overflow-visible border border-slate-200 dark:border-slate-800">
+        class="bg-white dark:bg-slate-900 w-full max-w-[760px] rounded-2xl shadow-[0_20px_45px_rgba(15,23,42,0.35)] flex flex-col max-h-[90vh]">
 
         <div
-            class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
-            <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <span class="material-symbols-outlined text-primary">event_available</span>
+            class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center shrink-0">
+            <h3 class="m-0 text-xl font-bold text-slate-900 dark:text-white">
                 {{ isEditMode ? 'Editar Agendamento' : 'Novo Agendamento' }}
             </h3>
-            <button type="button" ng-click="closeModal()"
-                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                <span class="material-symbols-outlined">close</span>
+            <button type="button"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-2xl leading-none transition-colors"
+                ng-click="closeModal()">
+                &times;
             </button>
         </div>
 
-        <form id="formAppointment" ng-submit="saveAppointment()" class="p-6 space-y-5 overflow-visible">
+        <div class="p-6 overflow-y-auto">
+            <form ng-submit="saveAppointment()" class="flex flex-col gap-5">
 
-            <div class="space-y-1.5 relative">
-                <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Paciente <span
-                        class="text-red-500">*</span></label>
-                <div class="relative">
-                    <span
-                        class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">search</span>
-
-                    <input type="text" ng-model="modalTypeahead.patient.term" ng-model-options="{ debounce: 300 }"
-                        ng-change="searchModalPatients()" ng-blur="modalTypeahead.patient.isOpen = false"
-                        class="w-full pl-10 pr-10 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                        placeholder="Selecione ou busque um paciente..." autocomplete="off" required />
-
-                    <span ng-show="modalTypeahead.patient.loading" class="absolute right-3 top-1/2 -translate-y-1/2">
-                        <svg class="animate-spin h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                            </circle>
-                            <path class="opacity-75"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                fill="currentColor"></path>
-                        </svg>
-                    </span>
-                    <span ng-show="!modalTypeahead.patient.loading"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 pointer-events-none">expand_more</span>
-                </div>
-
-                <div ng-show="modalTypeahead.patient.isOpen"
-                    class="absolute top-[100%] left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-[100] max-h-48 overflow-y-auto">
-                    <ul class="py-1">
-                        <li ng-if="modalTypeahead.patient.results.length === 0"
-                            class="px-4 py-2 text-sm text-slate-500">Nenhum paciente encontrado.</li>
-                        <li ng-repeat="p in modalTypeahead.patient.results" ng-mousedown="selectModalPatient(p)"
-                            class="px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 transition-colors">
-                            <div class="font-bold text-sm text-slate-900 dark:text-slate-100">{{ p.name }}</div>
-                            <div class="text-xs text-slate-500">CPF: {{ p.cpf | cpfFilter }}</div>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="space-y-1.5 relative">
-                <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Médico Responsável <span
-                        class="text-red-500">*</span></label>
-                <div class="relative">
-                    <span
-                        class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">search</span>
-
-                    <input type="text" ng-model="modalTypeahead.doctor.term" ng-model-options="{ debounce: 300 }"
-                        ng-change="searchModalDoctors()" ng-blur="modalTypeahead.doctor.isOpen = false"
-                        class="w-full pl-10 pr-10 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                        placeholder="Selecione o profissional..." autocomplete="off" required />
-
-                    <span ng-show="modalTypeahead.doctor.loading" class="absolute right-3 top-1/2 -translate-y-1/2">
-                        <svg class="animate-spin h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                            </circle>
-                            <path class="opacity-75"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                fill="currentColor"></path>
-                        </svg>
-                    </span>
-                    <span ng-show="!modalTypeahead.doctor.loading"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 pointer-events-none">expand_more</span>
-                </div>
-
-                <div ng-show="modalTypeahead.doctor.isOpen"
-                    class="absolute top-[100%] left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-[100] max-h-48 overflow-y-auto">
-                    <ul class="py-1">
-                        <li ng-if="modalTypeahead.doctor.results.length === 0" class="px-4 py-2 text-sm text-slate-500">
-                            Nenhum médico encontrado.</li>
-                        <li ng-repeat="doc in modalTypeahead.doctor.results" ng-mousedown="selectModalDoctor(doc)"
-                            class="px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 transition-colors">
-                            <div class="font-bold text-sm text-slate-900 dark:text-slate-100">{{ doc.name }}</div>
-                            <div class="text-xs text-slate-500">{{ doc.email }}</div>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-1.5">
-                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Data <span
+                <div class="relative flex flex-col gap-1.5">
+                    <label class="text-sm font-bold text-slate-700 dark:text-slate-300">Paciente <span
                             class="text-red-500">*</span></label>
-                    <input ng-model="appointmentForm.date" type="date" required
-                        class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
+                    <input type="text"
+                        class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm p-2.5 transition-all text-slate-900 dark:text-white"
+                        placeholder="Busque por Nome ou CPF..." ng-model="modalTypeahead.patient.term"
+                        ng-change="searchModalPatients()" ng-model-options="{ debounce: 300 }" autocomplete="off">
+
+                    <div class="absolute top-[100%] left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-[200] max-h-60 overflow-y-auto"
+                        ng-if="modalTypeahead.patient.isOpen && modalTypeahead.patient.results.length">
+                        <ul class="py-1">
+                            <li ng-repeat="p in modalTypeahead.patient.results" ng-click="selectModalPatient(p)"
+                                class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 transition-colors">
+                                <div class="font-bold text-sm text-slate-900 dark:text-slate-100">{{ p.name }}</div>
+                                <div class="text-xs text-slate-500 font-medium">CPF: {{ p.cpf | cpfFilter }}</div>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="space-y-1.5">
-                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Horário <span
+
+                <div class="relative flex flex-col gap-1.5">
+                    <label class="text-sm font-bold text-slate-700 dark:text-slate-300">Médico Responsável <span
                             class="text-red-500">*</span></label>
-                    <input ng-model="appointmentForm.time" type="time" required
-                        class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
+                    <input type="text"
+                        class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm p-2.5 transition-all text-slate-900 dark:text-white"
+                        placeholder="Busque por Nome ou E-mail..." ng-model="modalTypeahead.doctor.term"
+                        ng-change="searchModalDoctors()" ng-model-options="{ debounce: 300 }" autocomplete="off">
+
+                    <div class="absolute top-[100%] left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-[200] max-h-60 overflow-y-auto"
+                        ng-if="modalTypeahead.doctor.isOpen && modalTypeahead.doctor.results.length">
+                        <ul class="py-1">
+                            <li ng-repeat="d in modalTypeahead.doctor.results" ng-click="selectModalDoctor(d)"
+                                class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 transition-colors">
+                                <div class="font-bold text-sm text-slate-900 dark:text-slate-100">{{ d.name }}</div>
+                                <div class="text-xs text-slate-500 font-medium">E-mail: {{ d.email }}</div>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
 
-            <div class="space-y-1.5" ng-if="isEditMode">
-                <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Status do Agendamento</label>
-                <select ng-model="appointmentForm.status"
-                    class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
-                    <option value="SCHEDULED">Agendado</option>
-                    <option value="CONFIRMED">Confirmado</option>
-                    <option value="COMPLETED">Concluído</option>
-                    <option value="CANCELED">Cancelado</option>
-                </select>
-            </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-sm font-bold text-slate-700 dark:text-slate-300">Data <span
+                                class="text-red-500">*</span></label>
+                        <input type="date"
+                            class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm p-2.5 transition-all text-slate-900 dark:text-white"
+                            ng-model="appointmentForm.date">
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-sm font-bold text-slate-700 dark:text-slate-300">Hora <span
+                                class="text-red-500">*</span></label>
+                        <input type="time"
+                            class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm p-2.5 transition-all text-slate-900 dark:text-white"
+                            ng-model="appointmentForm.time">
+                    </div>
+                </div>
 
-            <div class="space-y-1.5 pt-2">
-                <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Observações Adicionais</label>
-                <textarea ng-model="appointmentForm.notes"
-                    class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all h-20 resize-none"
-                    placeholder="Motivo da consulta, sintomas, etc..."></textarea>
-            </div>
-        </form>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-bold text-slate-700 dark:text-slate-300">Observações</label>
+                    <textarea
+                        class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm p-2.5 transition-all text-slate-900 dark:text-white"
+                        rows="3" ng-model="appointmentForm.notes"
+                        placeholder="Queixas, sintomas, observações adicionais..."></textarea>
+                </div>
+            </form>
+        </div>
 
-        <div
-            class="px-6 py-4 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
-            <button type="button" ng-click="closeModal()"
-                class="px-5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+        <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3 shrink-0">
+            <button type="button"
+                class="px-4 py-2 rounded-lg font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+                ng-click="closeModal()">
                 Cancelar
             </button>
-            <button type="submit" form="formAppointment" ng-disabled="isSaving"
-                class="px-8 py-2 rounded-lg bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2">
-                {{ isSaving ? 'Processando...' : (isEditMode ? 'Salvar Alterações' : 'Agendar') }}
+            <button type="button"
+                class="px-5 py-2 rounded-lg font-bold bg-primary text-white hover:brightness-105 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                ng-click="saveAppointment()"
+                ng-disabled="isSaving || !appointmentForm.patient_id || !appointmentForm.doctor_id || !appointmentForm.date || !appointmentForm.time">
+                {{ isSaving ? 'Salvando...' : (isEditMode ? 'Atualizar' : 'Agendar') }}
             </button>
         </div>
     </div>
