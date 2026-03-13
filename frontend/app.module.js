@@ -3,4 +3,5 @@ angular.module('helixcare', [
     'helixcare.auth',
     'helixcare.patients',
     'helixcare.appointments',
+    'helixcare.medicalRecord',
 ]);
