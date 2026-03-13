@@ -33,7 +33,7 @@ import { SearchModule } from './search/search.module';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         autoLoadModels: true,
-        synchronize: false,
+        synchronize: false, 
         logging: configService.get<string>('NODE_ENV') === 'development' ? console.log : false,
         define: {
           timestamps: true,

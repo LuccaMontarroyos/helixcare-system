@@ -111,6 +111,15 @@ angular
               requireAuth: true, 
               allowedRoles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR', 'NURSE', 'LAB_TECHNICIAN'] 
           }
-      });;
+      })
+      .state('patient-medical-records', {
+        url: '/patients/:patientId/medical-records',
+            templateUrl: 'modules/medical-records/views/board.html',
+            controller: 'MedicalRecordsController',
+            data: { 
+                requireAuth: true, 
+                allowedRoles: ['ADMIN', 'DOCTOR', 'NURSE']
+            }
+      });
     },
   ]);
