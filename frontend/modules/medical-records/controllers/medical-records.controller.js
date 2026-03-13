@@ -10,8 +10,14 @@ angular.module('helixcare.medicalRecords')
         $scope.editor = {
             isNew: true,
             id: null,
-            title: 'Evolução Clínica',
-            notes: '',
+            anamnesis: '',
+            diagnosis: '',
+            prescription: '',
+            social_history: {
+                is_smoker: false,
+                consumes_alcohol: false,
+                notes: ''
+            },
             attachments: [],
             isLocked: false,
             lockedBy: null
@@ -19,7 +25,6 @@ angular.module('helixcare.medicalRecords')
 
         $scope.init = function() {
             var patientId = $stateParams.patientId;
-            
             $q.all([
                 PatientsService.getPatientById(patientId),
                 MedicalRecordsService.getPatientHistory(patientId)
@@ -27,20 +32,23 @@ angular.module('helixcare.medicalRecords')
             .then(function(results) {
                 $scope.patient = results[0];
                 $scope.history = results[1].items || results[1].data || results[1];
-                
                 $rootScope.pageSpecificTitle = $scope.patient.name;
             })
-            .catch(function() {
-                ToastService.error("Falha ao carregar o prontuário.");
-            })
-            .finally(function() {
-                $scope.isLoading = false;
-            });
+            .catch(function() { ToastService.error("Falha ao carregar o prontuário."); })
+            .finally(function() { $scope.isLoading = false; });
         };
         
-        $scope.startNewEvolution = function() {
+        $scope.startNewEvolution = function(showToast) {
             $scope.releaseLock();
-            $scope.editor = { isNew: true, id: null, title: 'Nova Evolução', notes: '', attachments: [], isLocked: false, lockedBy: null };
+            $scope.editor = { 
+                isNew: true, id: null, anamnesis: '', diagnosis: '', prescription: '', 
+                social_history: { is_smoker: false, consumes_alcohol: false, notes: '' },
+                attachments: [], isLocked: false, lockedBy: null 
+            };
+
+            if (showToast) {
+                ToastService.info("Rascunho descartado. Prancheta limpa.");
+            }
         };
 
         $scope.viewRecord = function(record) {
@@ -49,8 +57,10 @@ angular.module('helixcare.medicalRecords')
             $scope.editor = {
                 isNew: false,
                 id: record.id,
-                title: record.title || 'Evolução Registrada',
-                notes: record.notes,
+                anamnesis: record.anamnesis || record.notes,
+                diagnosis: record.diagnosis,
+                prescription: record.prescription,
+                social_history: record.social_history || { is_smoker: false, consumes_alcohol: false, notes: '' },
                 attachments: record.attachments || [],
                 isLocked: false,
                 lockedBy: null
@@ -70,9 +80,7 @@ angular.module('helixcare.medicalRecords')
             }
         };
 
-        $scope.$on('$destroy', function() {
-            $scope.releaseLock();
-        });
+        $scope.$on('$destroy', function() { $scope.releaseLock(); });
 
         $scope.addAttachment = function(element) {
             $scope.$apply(function() {
@@ -88,37 +96,37 @@ angular.module('helixcare.medicalRecords')
         };
 
         $scope.saveEvolution = function() {
-            if (!$scope.editor.notes) {
-                ToastService.warning("A evolução não pode estar vazia.");
+            if (!$scope.editor.anamnesis) {
+                ToastService.warning("A Anamnese é obrigatória.");
                 return;
             }
 
             $scope.isSaving = true;
+            
             var payload = {
                 patient_id: $scope.patient.id,
-                notes: $scope.editor.notes,
-                title: $scope.editor.title
+                anamnesis: $scope.editor.anamnesis,
+                diagnosis: $scope.editor.diagnosis || null,
+                prescription: $scope.editor.prescription || null,
+                social_history: $scope.editor.social_history
             };
 
             var request = $scope.editor.isNew 
                 ? MedicalRecordsService.createRecord(payload)
                 : MedicalRecordsService.updateRecord($scope.editor.id, payload);
 
-            request.then(function(savedRecord) {
-                var recordId = savedRecord.id || $scope.editor.id;
-
-                var newFiles = $scope.editor.attachments.filter(function(a) { return !a.id; });
+            request.then(function(res) {
+                var recordId = res.id || (res.data && res.data.id) || $scope.editor.id;
+                var newFiles = $scope.editor.attachments.filter(function(a) { return !a.url; });
                 
                 if (newFiles.length > 0) {
                     var uploadPromises = newFiles.map(function(file) {
                         return MedicalRecordsService.uploadAttachment(recordId, file);
                     });
 
-                    return $q.all(uploadPromises).then(function() {
-                        return savedRecord;
-                    });
+                    return $q.all(uploadPromises).then(function() { return res; });
                 }
-                return savedRecord;
+                return res;
             })
             .then(function() {
                 ToastService.success("Evolução salva com sucesso!");
@@ -126,11 +134,11 @@ angular.module('helixcare.medicalRecords')
                 $scope.startNewEvolution();
             })
             .catch(function(err) {
-                ToastService.error("Falha ao salvar o prontuário.");
+                var msg = err.message || err.error || "Falha ao salvar o prontuário.";
+                if (angular.isArray(msg)) msg = msg.join('<br>');
+                ToastService.error(msg, "Erro de Validação");
             })
-            .finally(function() {
-                $scope.isSaving = false;
-            });
+            .finally(function() { $scope.isSaving = false; });
         };
 
         $scope.init();

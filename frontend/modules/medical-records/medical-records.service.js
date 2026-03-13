@@ -41,14 +41,16 @@ angular.module('helixcare.medicalRecords')
     this.uploadAttachment = function(recordId, file) {
         var deferred = $q.defer();
         var formData = new FormData();
+        
         formData.append('file', file);
 
         $http.post(API_URL + '/' + recordId + '/upload', formData, {
             transformRequest: angular.identity,
-            headers: { 'Content-Type': undefined }
+            headers: { 'Content-Type': undefined } 
         })
         .then(function(res) { deferred.resolve(res.data); })
         .catch(function(err) { deferred.reject(err.data || err); });
+        
         return deferred.promise;
     };
 }]);
