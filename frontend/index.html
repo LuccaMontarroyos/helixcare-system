@@ -88,8 +88,8 @@
                     <span class="material-symbols-outlined">calendar_today</span>
                     <span>Agenda</span>
                 </a>
-                <a ui-sref="dashboard"
-                    ng-class="main.isStateActive('medical-records') ? 'bg-primary/10 text-primary border-r-4 border-primary font-bold' : 'text-slate-600 dark:text-slate-400 border-r-4 border-transparent hover:bg-primary/5 hover:text-primary font-medium'"
+                <a ui-sref="medical-records-hub"
+                    ng-class="main.isStateActive('medical-records-hub') || main.isStateActive('patient-medical-records') ? 'bg-primary/10 text-primary border-r-4 border-primary font-bold' : 'text-slate-600 dark:text-slate-400 border-r-4 border-transparent hover:bg-primary/5 hover:text-primary font-medium'"
                     class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all cursor-pointer" title="Em breve">
                     <span class="material-symbols-outlined">assignment</span>
                     <span>Prontuários</span>
@@ -277,8 +277,9 @@
     <script src="modules/appointments/controllers/appointments.controller.js"></script>
 
     <script src="modules/medical-records/medical-records.module.js"></script>
-    <script src="modules/medical-records/controllers/medical-records.controller.js"></script>
     <script src="modules/medical-records/medical-records.service.js"></script>
+    <script src="modules/medical-records/controllers/medical-records.controller.js"></script>
+    <script src="modules/medical-records/controllers/medical-records-hub.controller.js"></script>
 </body>
 
 </html>
