@@ -1,0 +1,351 @@
+<div class="animate-fade-in" ng-cloak>
+
+    <div class="flex flex-wrap justify-between items-end gap-3 mb-8">
+        <div class="flex flex-col gap-2">
+            <h1 class="text-slate-900 dark:text-slate-100 text-3xl font-black leading-tight tracking-tight">Faturamento
+                e Caixa</h1>
+            <p class="text-slate-500 text-base font-normal leading-normal">Gerencie faturas, repasses de convênio e o
+                fluxo de receita.</p>
+        </div>
+        <div class="flex gap-2">
+            <button hc-has-role="['ADMIN', 'RECEPTIONIST']" ng-click="openModal()"
+                class="flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:brightness-110 transition-all">
+                <span class="material-symbols-outlined text-sm">add</span> Nova Fatura
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div
+            class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-emerald-500">
+            <p class="text-slate-500 text-sm font-medium leading-normal">Receita Recebida</p>
+            <p class="text-slate-900 dark:text-slate-100 tracking-light text-3xl font-bold leading-tight">{{
+                summary.totalRevenue | currency:'R$ ' }}</p>
+        </div>
+        <div
+            class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-rose-500">
+            <p class="text-slate-500 text-sm font-medium leading-normal">Pagamentos Pendentes</p>
+            <p class="text-slate-900 dark:text-slate-100 tracking-light text-3xl font-bold leading-tight">{{
+                summary.pendingPayments | currency:'R$ ' }}</p>
+        </div>
+        <div
+            class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-sky-500">
+            <p class="text-slate-500 text-sm font-medium leading-normal">A Receber (Convênio)</p>
+            <p class="text-slate-900 dark:text-slate-100 tracking-light text-3xl font-bold leading-tight">{{
+                summary.insuranceClaims | currency:'R$ ' }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 mb-6 p-4">
+        <div class="flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Filtrar por:</span>
+            </div>
+
+            <select ng-model="filters.status" ng-change="applyFilters()"
+                class="h-9 rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm px-3 focus:ring-primary focus:border-primary cursor-pointer text-slate-700 dark:text-slate-300">
+                <option value="">Todos os Status</option>
+                <option value="PENDING">Pendentes</option>
+                <option value="PAID">Pagos</option>
+                <option value="BILLED_TO_INSURANCE">Enviado ao Convênio</option>
+            </select>
+
+            <select ng-model="filters.payment_method" ng-change="applyFilters()"
+                class="h-9 rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-primary focus:border-primary cursor-pointer text-slate-700 dark:text-slate-300">
+                <option value="">Qualquer Método</option>
+                <option value="CREDIT_CARD">Cartão</option>
+                <option value="PIX">PIX</option>
+                <option value="CASH">Dinheiro</option>
+                <option value="HEALTH_INSURANCE">Convênio</option>
+            </select>
+
+            <button ng-click="clearFilters()"
+                class="text-xs font-bold text-slate-400 hover:text-primary transition-colors ml-2">Limpar</button>
+
+            <div class="ml-auto relative hidden sm:block">
+                <span
+                    class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+                <input type="text" ng-model="filters.search"
+                    class="w-64 pl-9 pr-4 py-1.5 h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-primary focus:border-primary"
+                    placeholder="Buscar na tabela..." />
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col items-center justify-center py-10" ng-if="isLoading">
+        <svg class="animate-spin h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                fill="currentColor"></path>
+        </svg>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden"
+        ng-if="!isLoading">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">ID</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Vencimento</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Paciente</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Valor
+                        </th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Método</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
+                        <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-center">
+                            Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tr ng-if="invoices.length === 0">
+                        <td colspan="7" class="px-6 py-8 text-center text-slate-500">Nenhuma fatura encontrada.</td>
+                    </tr>
+                    <tr ng-class="{'bg-rose-50/50 dark:bg-rose-900/10': isOverdue(invoice)}"
+                        class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all"
+                        ng-repeat="invoice in invoices | filter:filters.search">
+                        <td class="px-6 py-4"><span class="text-xs font-mono font-bold text-slate-400"
+                                title="{{ invoice.id }}">#{{ invoice.id.substring(0,6) }}</span></td>
+                        <td class="px-6 py-4">
+                            <span class="text-sm font-medium"
+                                ng-class="{'text-rose-600 font-bold': isOverdue(invoice), 'text-slate-700 dark:text-slate-300': !isOverdue(invoice)}">
+                                {{ invoice.due_date | date:'dd/MM/yyyy' }}
+                                <span class="block text-[10px] uppercase font-bold text-rose-500"
+                                    ng-if="isOverdue(invoice)">Vencida</span>
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-primary border border-primary/20">
+                                    {{ invoice.patient.name.charAt(0) | uppercase }}
+                                </div>
+                                <div>
+                                    <span class="text-sm font-bold text-slate-900 dark:text-slate-100">{{
+                                        invoice.patient.name }}</span>
+                                    <span class="block text-[11px] text-slate-500">CPF: {{ invoice.patient.cpf |
+                                        cpfFilter }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <span class="text-sm font-bold text-slate-900 dark:text-slate-100">{{ invoice.amount |
+                                currency:'R$ ' }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span
+                                class="inline-flex items-center gap-1 text-[11px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
+                                <span class="material-symbols-outlined text-[14px]">{{
+                                    getMethodIcon(invoice.payment_method) }}</span>
+                                {{ invoice.method_pt }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                                ng-class="{
+                                'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400': invoice.status === 'PENDING',
+                                'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400': invoice.status === 'PAID',
+                                'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400': invoice.status === 'BILLED_TO_INSURANCE'
+                            }">
+                                {{ invoice.status_pt }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+
+                            <button
+                                class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg shadow-sm transition-colors"
+                                ng-click="markAsPaid(invoice)"
+                                ng-if="invoice.status === 'PENDING' && invoice.payment_method !== 'HEALTH_INSURANCE'">
+                                <span class="material-symbols-outlined text-[16px]">check_circle</span> Baixar
+                            </button>
+
+                            <button
+                                class="inline-flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold py-1.5 px-3 rounded-lg shadow-sm transition-colors"
+                                ng-click="billToInsurance(invoice)"
+                                ng-if="invoice.status === 'PENDING' && invoice.payment_method === 'HEALTH_INSURANCE'">
+                                <span class="material-symbols-outlined text-[16px]">send</span> Faturar
+                            </button>
+
+                            <span class="text-[11px] text-slate-400 italic"
+                                ng-if="invoice.status !== 'PENDING'">Resolvida</span>
+
+                            <button ng-if="invoice.status === 'PENDING'" ng-click="deleteInvoice(invoice)"
+                                class="text-slate-400 hover:text-red-500 p-1.5 ml-2 transition-colors"
+                                title="Cancelar Fatura">
+                                <span class="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30"
+            ng-if="pagination.totalPages > 1">
+            <span class="text-sm text-slate-500">Página <span class="font-bold">{{ filters.page }}</span> de {{
+                pagination.totalPages }}</span>
+            <div class="flex gap-2">
+                <button ng-click="goToPage(filters.page - 1)" ng-disabled="filters.page === 1"
+                    class="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 disabled:opacity-50"><span
+                        class="material-symbols-outlined text-sm">chevron_left</span></button>
+                <button ng-repeat="page in pageNumbers" ng-click="goToPage(page)"
+                    ng-class="filters.page === page ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600'"
+                    class="px-3.5 py-1.5 border rounded-lg font-bold text-sm">{{ page }}</button>
+                <button ng-click="goToPage(filters.page + 1)" ng-disabled="filters.page === pagination.totalPages"
+                    class="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 disabled:opacity-50"><span
+                        class="material-symbols-outlined text-sm">chevron_right</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div ng-if="isModalOpen"
+        class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+
+        <div
+            class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]">
+
+            <div
+                class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 rounded-t-xl shrink-0">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">receipt_long</span> Nova Fatura
+                </h3>
+                <button type="button" ng-click="closeModal()"
+                    class="text-slate-400 hover:text-red-500 transition-colors p-1">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto overflow-x-hidden">
+                <form id="invoiceForm" ng-submit="submitInvoice()" class="space-y-5">
+
+                    <div class="space-y-1.5 relative">
+                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Paciente <span
+                                class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span
+                                class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">search</span>
+
+                            <input type="text" ng-model="patientTypeahead.term" ng-change="searchPatients()"
+                                ng-model-options="{ debounce: 300 }"
+                                class="w-full pl-9 pr-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-primary focus:border-primary outline-none transition-all text-slate-900 dark:text-slate-100"
+                                placeholder="Buscar paciente por nome..." autocomplete="off" required>
+                        </div>
+
+                        <ul ng-if="patientTypeahead.isOpen && patientTypeahead.results.length > 0"
+                            class="absolute z-[1000] w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                            <li ng-repeat="p in patientTypeahead.results" ng-mousedown="selectPatient(p)"
+                                class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer border-b border-slate-100 dark:border-slate-700 last:border-0 transition-colors">
+                                <div class="font-bold text-sm text-slate-900 dark:text-slate-100">{{ p.name }}</div>
+                                <div class="text-xs text-slate-500 font-medium">CPF: {{ p.cpf | cpfFilter }}</div>
+                            </li>
+                        </ul>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Vincular
+                                    Cobrança a <span class="text-red-500">*</span></label>
+                                <select ng-model="newInvoice.link_type"
+                                    ng-change="newInvoice.appointment_id=''; newInvoice.exam_id='';"
+                                    class="w-full h-11 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm focus:ring-primary focus:border-primary appearance-none cursor-pointer text-slate-900 dark:text-slate-100">
+                                    <option value="appointment">Uma Consulta</option>
+                                    <option value="exam">Um Exame</option>
+                                </select>
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Selecione o
+                                    Histórico <span class="text-red-500">*</span></label>
+
+                                <div ng-if="isLoadingLinks"
+                                    class="h-11 flex items-center text-sm text-primary font-bold gap-2 px-2">
+                                    <span class="material-symbols-outlined animate-spin text-[18px]">autorenew</span>
+                                    Carregando...
+                                </div>
+
+                                <div class="relative" ng-if="!isLoadingLinks && newInvoice.link_type === 'appointment'">
+                                    <select ng-model="newInvoice.appointment_id" ng-disabled="!newInvoice.patient_id"
+                                        class="w-full h-11 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-3 pr-8 text-sm focus:ring-primary focus:border-primary appearance-none cursor-pointer text-slate-900 dark:text-slate-100 disabled:opacity-50"
+                                        required>
+                                        <option value="" disabled selected>Selecione a consulta...</option>
+                                        <option ng-repeat="appt in patientAppointments" value="{{appt.id}}">
+                                            {{ appt.appointment_date | date:'dd/MM/yyyy HH:mm' }} - Dr(a) {{
+                                            appt.doctor.name }}
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="relative" ng-if="!isLoadingLinks && newInvoice.link_type === 'exam'">
+                                    <select ng-model="newInvoice.exam_id" ng-disabled="!newInvoice.patient_id"
+                                        class="w-full h-11 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-3 pr-8 text-sm focus:ring-primary focus:border-primary appearance-none cursor-pointer text-slate-900 dark:text-slate-100 disabled:opacity-50"
+                                        required>
+                                        <option value="" disabled selected>Selecione o exame...</option>
+                                        <option ng-repeat="exam in patientExams" value="{{exam.id}}">
+                                            {{ exam.exam_type }} ({{ exam.created_at | date:'dd/MM/yyyy' }})
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <p ng-if="!isLoadingLinks && !newInvoice.patient_id"
+                                    class="text-[10px] text-amber-500 mt-0.5 italic">Selecione o paciente primeiro.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Valor (R$) <span
+                                    class="text-red-500">*</span></label>
+                            <input ng-model="newInvoice.amount"
+                                class="w-full h-11 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm focus:ring-primary focus:border-primary text-slate-900 dark:text-slate-100"
+                                placeholder="150.00" type="number" step="0.01" required />
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Vencimento <span
+                                    class="text-red-500">*</span></label>
+                            <input ng-model="newInvoice.due_date"
+                                class="w-full h-11 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm focus:ring-primary focus:border-primary text-slate-900 dark:text-slate-100"
+                                type="date" required />
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Método de
+                            Pagamento</label>
+                        <select ng-model="newInvoice.payment_method"
+                            class="w-full h-11 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm focus:ring-primary focus:border-primary appearance-none cursor-pointer text-slate-900 dark:text-slate-100">
+                            <option value="CREDIT_CARD">Cartão de Crédito/Débito</option>
+                            <option value="PIX">PIX</option>
+                            <option value="CASH">Dinheiro</option>
+                            <option value="HEALTH_INSURANCE">Convênio Médico</option>
+                        </select>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Observações da
+                            Fatura</label>
+                        <textarea ng-model="newInvoice.notes" rows="2"
+                            class="w-full p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-primary focus:border-primary resize-none text-slate-900 dark:text-slate-100"
+                            placeholder="Ex: Referente à consulta cardiológica do dia..."></textarea>
+                    </div>
+                </form>
+            </div>
+
+            <div
+                class="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 rounded-b-xl flex justify-end gap-3 shrink-0">
+                <button type="button" ng-click="closeModal()"
+                    class="px-5 py-2 rounded-lg font-bold text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit" form="invoiceForm" ng-disabled="isSaving"
+                    class="px-6 py-2 rounded-lg bg-emerald-500 text-white font-bold flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-md disabled:opacity-50">
+                    <span ng-if="isSaving" class="material-symbols-outlined text-sm animate-spin">autorenew</span>
+                    <span ng-if="!isSaving" class="material-symbols-outlined text-[18px]">check_circle</span>
+                    {{ isSaving ? 'Gerando...' : 'Gerar Fatura' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>

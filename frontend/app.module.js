@@ -4,5 +4,6 @@ angular.module('helixcare', [
     'helixcare.patients',
     'helixcare.appointments',
     'helixcare.medicalRecords',
-    'helixcare.exams'
+    'helixcare.exams',
+    'helixcare.billing',
 ]);
