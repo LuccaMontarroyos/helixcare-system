@@ -21,7 +21,7 @@ export class Exam extends Model<Exam> {
   @Column({ type: DataType.UUID, allowNull: false })
   declare patient_id: string;
 
-  @BelongsTo(() => Patient)
+  @BelongsTo(() => Patient, 'patient_id')
   declare patient: Patient;
 
   @ForeignKey(() => User)

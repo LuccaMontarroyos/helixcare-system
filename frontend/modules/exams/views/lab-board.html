@@ -1,0 +1,349 @@
+<div class="animate-fade-in" ng-cloak>
+
+    <div class="flex flex-wrap justify-between items-end gap-4 mb-8">
+        <div class="flex flex-col gap-1">
+            <h1 class="text-slate-900 dark:text-slate-100 text-3xl font-black leading-tight tracking-tight">Laboratório
+                Clínico</h1>
+            <p class="text-slate-500 text-base">Gestão centralizada de exames e laudos patológicos.</p>
+        </div>
+        <div class="flex gap-3">
+            <button hc-has-role="['DOCTOR', 'ADMIN']" ng-click="openRequestModal()"
+                class="flex items-center justify-center rounded-lg h-11 px-6 bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:brightness-110 transition-all">
+                <span class="material-symbols-outlined mr-2">add</span> Solicitar Exame
+            </button>
+        </div>
+    </div>
+
+    <section
+        class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2 text-slate-900 dark:text-white font-bold">
+                <span class="material-symbols-outlined text-primary">tune</span>
+                <h2>Filtros</h2>
+            </div>
+            <button ng-click="clearFilters()"
+                class="text-xs font-bold text-slate-400 hover:text-primary transition-colors">Limpar Filtros</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-1.5 relative">
+                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Buscar por Tipo de
+                    Exame</label>
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+                    <input type="text" ng-model="filters.exam_type" ng-model-options="{ debounce: 500 }"
+                        ng-change="applyFilters()"
+                        class="w-full pl-9 pr-4 rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-2.5 transition-all shadow-sm"
+                        placeholder="Ex: Hemograma..." />
+                </div>
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Status</label>
+                <select ng-model="filters.status" ng-change="applyFilters()"
+                    class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-2.5">
+                    <option value="">Todos</option>
+                    <option value="REQUESTED">Solicitados</option>
+                    <option value="IN_PROGRESS">Em Análise</option>
+                    <option value="COMPLETED">Concluídos</option>
+                    <option value="CANCELED">Cancelados</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <div class="flex flex-col items-center justify-center py-20" ng-if="isLoading">
+        <svg class="animate-spin h-10 w-10 text-primary mb-4" fill="none" viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                fill="currentColor"></path>
+        </svg>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden"
+        ng-if="!isLoading">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Data</th>
+                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Paciente</th>
+                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Exame & Motivo
+                        </th>
+                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Ações
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tr ng-if="exams.length === 0">
+                        <td colspan="5" class="px-6 py-8 text-center text-slate-500">Nenhum exame encontrado.</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all" ng-repeat="exam in exams">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-slate-900 dark:text-slate-100">{{ exam.created_at |
+                                date:'dd/MM/yyyy' }}</div>
+                            <div class="text-xs text-slate-500">{{ exam.created_at | date:'HH:mm' }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="size-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center border border-primary/20">
+                                    {{ exam.patient && exam.patient.name ? (exam.patient.name.charAt(0) | uppercase) :
+                                    '?' }}
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold text-slate-900 dark:text-slate-100">{{ exam.patient ?
+                                        exam.patient.name : 'Paciente Não Carregado' }}</div>
+                                    <div class="text-[11px] text-slate-500">CPF: {{ (exam.patient && exam.patient.cpf |
+                                        cpfFilter) || 'N/A' }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase">{{
+                                exam.exam_type }}</div>
+                            <div class="text-[11px] text-slate-500 italic mt-0.5 line-clamp-1"
+                                title="{{ exam.observations }}">{{ exam.observations || 'Sem observações' }}</div>
+                            <div class="text-[10px] text-slate-400 mt-1">Dr(a). {{ exam.doctor.name }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span
+                                class="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 text-xs font-bold text-amber-700 dark:text-amber-400"
+                                ng-if="exam.status === 'REQUESTED'">
+                                SOLICITADO
+                            </span>
+                            <span
+                                class="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/30 px-2.5 py-1 text-xs font-bold text-blue-700 dark:text-blue-400"
+                                ng-if="exam.status === 'IN_PROGRESS'">
+                                EM ANÁLISE
+                            </span>
+                            <span
+                                class="inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-400"
+                                ng-if="exam.status === 'COMPLETED'">
+                                CONCLUÍDO
+                            </span>
+                            <span
+                                class="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-bold text-slate-600 dark:text-slate-400"
+                                ng-if="exam.status === 'CANCELED'">
+                                CANCELADO
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+
+                            <div hc-has-role="['LAB_TECHNICIAN', 'ADMIN']" class="inline-block">
+                                <button ng-if="exam.status === 'REQUESTED'" ng-click="startAnalysis(exam)"
+                                    class="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-md hover:bg-primary/20 transition-all border border-primary/20">
+                                    Iniciar Análise
+                                </button>
+
+                                <button ng-if="exam.status === 'IN_PROGRESS'" ng-click="openResultModal(exam)"
+                                    class="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all border border-emerald-200 dark:border-emerald-800 flex items-center inline-flex">
+                                    <span class="material-symbols-outlined text-[16px] mr-1">task_alt</span> Inserir
+                                    Laudo
+                                </button>
+                            </div>
+
+                            <div hc-has-role="['DOCTOR', 'ADMIN']" class="inline-block">
+
+                                <button ng-if="exam.status === 'REQUESTED'" ng-click="cancelExam(exam)"
+                                    class="text-slate-400 hover:text-red-500 p-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ml-2"
+                                    title="Cancelar Pedido">
+                                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                                </button>
+
+                                <a ng-if="exam.status === 'COMPLETED' && exam.result_file_url"
+                                    ng-href="{{ exam.result_file_url }}" target="_blank"
+                                    class="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all flex items-center inline-flex ml-2">
+                                    <span class="material-symbols-outlined text-[16px] mr-1">picture_as_pdf</span> Ver
+                                    PDF
+                                </a>
+
+                                <button ng-if="exam.status === 'COMPLETED' && !exam.result_file_url && exam.result_text"
+                                    ng-click="openViewReportModal(exam)"
+                                    class="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-md hover:bg-primary/20 transition-all flex items-center inline-flex ml-2">
+                                    <span class="material-symbols-outlined text-[16px] mr-1">description</span> Ler
+                                    Parecer
+                                </button>
+
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-8 flex flex-col sm:flex-row items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-6"
+        ng-if="pagination.totalPages > 1 && !isLoading">
+        <p class="text-sm text-slate-500 mb-4 sm:mb-0">Página <strong>{{ filters.page }}</strong> de <strong>{{
+                pagination.totalPages }}</strong></p>
+        <div class="flex gap-2">
+            <button ng-click="goToPage(filters.page - 1)" ng-disabled="filters.page === 1"
+                class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"><span
+                    class="material-symbols-outlined text-sm">chevron_left</span></button>
+            <button ng-repeat="page in pageNumbers track by $index" ng-click="goToPage(page)"
+                ng-class="filters.page === page ? 'bg-primary/10 text-primary font-bold' : 'text-slate-600 hover:bg-slate-50'"
+                class="px-3.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm">{{ page
+                }}</button>
+            <button ng-click="goToPage(filters.page + 1)" ng-disabled="filters.page === pagination.totalPages"
+                class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"><span
+                    class="material-symbols-outlined text-sm">chevron_right</span></button>
+        </div>
+    </div>
+
+    <div ng-show="isRequestModalOpen"
+        class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div
+            class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 relative">
+            <div
+                class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2"><span
+                        class="material-symbols-outlined text-primary">biotech</span> Solicitar Exame</h3>
+                <button ng-click="isRequestModalOpen = false" class="text-slate-400 hover:text-red-500"><span
+                        class="material-symbols-outlined">close</span></button>
+            </div>
+            <form ng-submit="submitExamRequest()" class="p-6 space-y-5">
+                <div class="space-y-1.5 relative">
+                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Paciente <span
+                            class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <span
+                            class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">search</span>
+                        <input type="text" ng-model="patientTypeahead.term" ng-change="searchPatients()"
+                            ng-model-options="{ debounce: 300 }"
+                            class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-primary focus:border-primary"
+                            placeholder="Buscar paciente..." autocomplete="off" required>
+                    </div>
+                    <ul ng-if="patientTypeahead.isOpen && patientTypeahead.results.length > 0"
+                        class="absolute z-[1000] w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                        <li ng-repeat="p in patientTypeahead.results" ng-mousedown="selectPatient(p)"
+                            class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer border-b border-slate-100 dark:border-slate-700 last:border-0">
+                            <div class="font-bold text-sm text-slate-900 dark:text-white">{{ p.name }}</div>
+                            <div class="text-xs text-slate-500">CPF: {{ p.cpf | cpfFilter }}</div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Tipo de Exame <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" ng-model="newExam.exam_type"
+                        class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-primary focus:border-primary"
+                        placeholder="Ex: Hemograma Completo" required>
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Observações Clínicas</label>
+                    <textarea ng-model="newExam.observations" rows="3"
+                        class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-primary focus:border-primary resize-none"
+                        placeholder="Motivo do exame, suspeitas..."></textarea>
+                </div>
+                <div class="pt-4 flex justify-end gap-3">
+                    <button type="button" ng-click="isRequestModalOpen = false"
+                        class="px-5 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:bg-slate-800 rounded-lg">Cancelar</button>
+                    <button type="submit" ng-disabled="isSaving"
+                        class="px-6 py-2 bg-primary text-white text-sm font-bold rounded-lg shadow-md hover:bg-primary/90 flex items-center gap-2">
+                        <span ng-if="isSaving" class="material-symbols-outlined text-sm animate-spin">autorenew</span>
+                        {{ isSaving ? 'Enviando...' : 'Solicitar' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div ng-show="resultModal.isOpen"
+        class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div
+            class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 relative">
+            <div
+                class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2"><span
+                        class="material-symbols-outlined text-emerald-500">task_alt</span> Concluir Exame</h3>
+                <button ng-click="resultModal.isOpen = false" class="text-slate-400 hover:text-red-500"><span
+                        class="material-symbols-outlined">close</span></button>
+            </div>
+
+            <div class="p-6 bg-slate-50/50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800">
+                <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">Paciente</p>
+                <p class="text-base font-bold text-slate-900 dark:text-white">{{ resultModal.exam.patient.name }}</p>
+                <p class="text-sm font-bold text-primary mt-2">{{ resultModal.exam.exam_type }}</p>
+            </div>
+
+            <form ng-submit="submitResult()" class="p-6 space-y-5">
+                <div class="space-y-1.5">
+                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Parecer / Laudo Textual
+                        <span class="text-red-500">*</span></label>
+                    <textarea ng-model="resultModal.result_text" rows="4"
+                        class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-primary focus:border-primary resize-none"
+                        placeholder="Digite os resultados numéricos ou o parecer técnico..." required></textarea>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Anexar PDF
+                        (Opcional)</label>
+                    <label
+                        class="cursor-pointer w-full flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <span class="material-symbols-outlined text-3xl text-slate-400 mb-2">cloud_upload</span>
+                        <span class="text-sm font-medium text-slate-600 dark:text-slate-300"
+                            ng-if="!resultModal.file">Clique para selecionar o laudo...</span>
+                        <span class="text-sm font-bold text-primary" ng-if="resultModal.file">{{ resultModal.file.name
+                            }}</span>
+                        <input type="file" class="hidden" onchange="angular.element(this).scope().setResultFile(this)"
+                            accept=".pdf,.jpg,.png" />
+                    </label>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3">
+                    <button type="button" ng-click="resultModal.isOpen = false"
+                        class="px-5 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:bg-slate-800 rounded-lg">Cancelar</button>
+                    <button type="submit" ng-disabled="resultModal.isSaving"
+                        class="px-6 py-2 bg-emerald-500 text-white text-sm font-bold rounded-lg shadow-md hover:bg-emerald-600 flex items-center gap-2">
+                        <span ng-if="resultModal.isSaving"
+                            class="material-symbols-outlined text-sm animate-spin">autorenew</span> {{
+                        resultModal.isSaving ? 'Enviando...' : 'Finalizar Exame' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div ng-show="viewReportModal.isOpen" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 relative">
+            
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 rounded-t-xl">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">description</span> Parecer Laboratorial
+                </h3>
+                <button ng-click="viewReportModal.isOpen = false" class="text-slate-400 hover:text-red-500 transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="p-6 bg-slate-50/50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800">
+                <p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">Paciente</p>
+                <p class="text-base font-bold text-slate-900 dark:text-white">{{ viewReportModal.exam.patient.name }}</p>
+                <p class="text-sm font-bold text-primary mt-1">{{ viewReportModal.exam.exam_type }}</p>
+                <p class="text-xs text-slate-500 mt-2"><strong>Data da conclusão:</strong> {{ viewReportModal.exam.updated_at | date:'dd/MM/yyyy HH:mm' }}</p>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div>
+                    <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Resultado / Laudo Técnico</h4>
+                    <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+                        {{ viewReportModal.exam.result_text }}
+                    </div>
+                </div>
+                
+                <div ng-if="viewReportModal.exam.lab_technician" class="flex justify-end pt-2">
+                    <p class="text-xs text-slate-400 italic">Laudado por: {{ viewReportModal.exam.lab_technician.name }}</p>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-end bg-slate-50 dark:bg-slate-900/50 rounded-b-xl">
+                <button type="button" ng-click="viewReportModal.isOpen = false" class="px-6 py-2 bg-primary text-white text-sm font-bold rounded-lg shadow-md hover:bg-primary/90 transition-all">
+                    Fechar Parecer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

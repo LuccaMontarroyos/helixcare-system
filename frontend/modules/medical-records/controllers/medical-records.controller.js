@@ -180,10 +180,6 @@ angular
             $scope.init();
             $scope.startNewEvolution();
 
-            // ==========================================
-            // AUTOMAÇÃO INTELIGENTE (SMART WORKFLOW)
-            // Se for uma evolução nova, tenta achar a consulta de hoje do paciente e dar baixa.
-            // ==========================================
             if ($scope.editor.isNew) {
               var today = new Date();
               var dateString =
