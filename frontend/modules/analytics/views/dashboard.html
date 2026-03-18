@@ -1,0 +1,271 @@
+<div class="animate-fade-in" ng-cloak>
+
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-8">
+        <div>
+            <h2 class="text-slate-900 dark:text-white text-3xl font-black leading-tight tracking-tight">Visão Geral
+                Gerencial</h2>
+            <p class="text-slate-500 dark:text-slate-400 text-sm">Monitoramento de performance, finanças e operação em
+                tempo real.</p>
+        </div>
+
+        <div
+            class="flex items-center gap-3 bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <span class="material-symbols-outlined text-primary ml-2">date_range</span>
+            <input type="date" ng-model="dateFilter.start"
+                class="border-none bg-transparent focus:ring-0 text-sm text-slate-700 dark:text-slate-300 font-bold p-1 cursor-pointer">
+            <span class="text-slate-400 text-sm">até</span>
+            <input type="date" ng-model="dateFilter.end"
+                class="border-none bg-transparent focus:ring-0 text-sm text-slate-700 dark:text-slate-300 font-bold p-1 cursor-pointer">
+
+            <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
+
+            <button ng-click="applyCustomDate()" ng-disabled="isLoading"
+                class="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all disabled:opacity-50">
+                <span ng-if="isLoading" class="material-symbols-outlined text-sm animate-spin">autorenew</span>
+                <span ng-if="!isLoading" class="material-symbols-outlined text-sm">refresh</span>
+                Atualizar
+            </button>
+        </div>
+    </div>
+
+    <div class="flex flex-col items-center justify-center py-20" ng-if="isLoading">
+        <svg class="animate-spin h-10 w-10 text-primary mb-4" fill="none" viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                fill="currentColor"></path>
+        </svg>
+        <p class="text-slate-500 font-medium font-bold uppercase tracking-widest text-xs">Compilando Analytics...</p>
+    </div>
+
+    <div ng-if="!isLoading">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div
+                class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-4 group hover:border-emerald-500 transition-colors">
+                <div class="flex justify-between items-start">
+                    <div
+                        class="size-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                        <span class="material-symbols-outlined">account_balance_wallet</span>
+                    </div>
+                    <span
+                        class="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wider">
+                        Realizado
+                    </span>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Receita Faturada</p>
+                    <p class="text-slate-900 dark:text-white text-3xl font-black leading-tight">{{ finance.paid |
+                        currency:'R$ ' }}</p>
+                </div>
+                <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1">
+                    <div class="bg-emerald-500 h-full transition-all duration-1000"
+                        ng-style="{'width': finance.paidPercentage + '%'}"></div>
+                </div>
+            </div>
+
+            <div
+                class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-4 group hover:border-amber-500 transition-colors">
+                <div class="flex justify-between items-start">
+                    <div
+                        class="size-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-600 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                        <span class="material-symbols-outlined">pending_actions</span>
+                    </div>
+                    <span
+                        class="text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wider">
+                        A Receber
+                    </span>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Receita Pendente</p>
+                    <p class="text-slate-900 dark:text-white text-3xl font-black leading-tight">{{ finance.pending |
+                        currency:'R$ ' }}</p>
+                </div>
+                <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1">
+                    <div class="bg-amber-500 h-full transition-all duration-1000"
+                        ng-style="{'width': (100 - finance.paidPercentage) + '%'}"></div>
+                </div>
+            </div>
+
+            <div
+                class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-4 group hover:border-blue-500 transition-colors">
+                <div class="flex justify-between items-start">
+                    <div
+                        class="size-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                        <span class="material-symbols-outlined">confirmation_number</span>
+                    </div>
+                    <span
+                        class="text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wider">
+                        Média
+                    </span>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Ticket Médio (Paciente)</p>
+                    <p class="text-slate-900 dark:text-white text-3xl font-black leading-tight">{{ finance.ticket |
+                        currency:'R$ ' }}</p>
+                </div>
+                <p class="text-xs text-slate-400 italic mt-1">Baseado no faturamento total do período</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <div
+                class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+                <div
+                    class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">donut_large</span> Distribuição Clínica
+                    </h3>
+                    <span class="text-xs font-bold text-slate-400 uppercase">{{ clinical.total }} Consultas no
+                        Período</span>
+                </div>
+
+                <div class="p-6 flex-1 flex flex-col justify-center gap-5 min-h-[300px]">
+
+                    <div class="flex flex-col gap-2">
+                        <div class="flex justify-between items-end">
+                            <span
+                                class="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"><span
+                                    class="size-2.5 rounded-full bg-emerald-500"></span> Atendidas</span>
+                            <span class="text-sm font-black text-emerald-600">{{ clinical.byStatus['COMPLETED'] || 0 }}
+                                <span class="text-[10px] text-slate-400 font-medium">({{
+                                    getPercentage(clinical.byStatus['COMPLETED'] || 0, clinical.total)
+                                    }}%)</span></span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-emerald-500 h-full transition-all duration-1000"
+                                ng-style="{'width': getPercentage(clinical.byStatus['COMPLETED'] || 0, clinical.total) + '%'}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <div class="flex justify-between items-end">
+                            <span
+                                class="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"><span
+                                    class="size-2.5 rounded-full bg-primary"></span> Aguardando na Clínica</span>
+                            <span class="text-sm font-black text-primary">{{ clinical.byStatus['CONFIRMED'] || 0 }}
+                                <span class="text-[10px] text-slate-400 font-medium">({{
+                                    getPercentage(clinical.byStatus['CONFIRMED'] || 0, clinical.total)
+                                    }}%)</span></span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-primary h-full transition-all duration-1000"
+                                ng-style="{'width': getPercentage(clinical.byStatus['CONFIRMED'] || 0, clinical.total) + '%'}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <div class="flex justify-between items-end">
+                            <span
+                                class="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"><span
+                                    class="size-2.5 rounded-full bg-amber-500"></span> Agendadas (Futuras)</span>
+                            <span class="text-sm font-black text-amber-600">{{ clinical.byStatus['SCHEDULED'] || 0 }}
+                                <span class="text-[10px] text-slate-400 font-medium">({{
+                                    getPercentage(clinical.byStatus['SCHEDULED'] || 0, clinical.total)
+                                    }}%)</span></span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-amber-500 h-full transition-all duration-1000"
+                                ng-style="{'width': getPercentage(clinical.byStatus['SCHEDULED'] || 0, clinical.total) + '%'}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <div class="flex justify-between items-end">
+                            <span
+                                class="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"><span
+                                    class="size-2.5 rounded-full bg-rose-500"></span> Canceladas / Faltas</span>
+                            <span class="text-sm font-black text-rose-600">{{ clinical.byStatus['CANCELED'] || 0 }}
+                                <span class="text-[10px] text-slate-400 font-medium">({{
+                                    getPercentage(clinical.byStatus['CANCELED'] || 0, clinical.total) }}%)</span></span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-rose-500 h-full transition-all duration-1000"
+                                ng-style="{'width': getPercentage(clinical.byStatus['CANCELED'] || 0, clinical.total) + '%'}">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div
+                class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+                <div
+                    class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-amber-500">biotech</span> Gargalos do Laboratório
+                    </h3>
+                    <span class="text-xs font-bold text-slate-400 uppercase">{{ lab.total }} Exames Pedidos</span>
+                </div>
+
+                <div class="p-6 flex-1 flex flex-col gap-6 relative">
+                    <div
+                        class="absolute left-10 top-12 bottom-12 w-1 bg-slate-100 dark:bg-slate-800 -z-10 rounded-full">
+                    </div>
+
+                    <div
+                        class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-transform hover:-translate-y-1">
+                        <div
+                            class="size-10 rounded-full bg-white dark:bg-slate-900 border-4 border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-500 shadow-sm">
+                            <span class="material-symbols-outlined text-[18px]">receipt_long</span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-slate-800 dark:text-slate-200">Aguardando Coleta/Análise
+                            </p>
+                            <p class="text-xs text-slate-500">Exames solicitados pelos médicos</p>
+                        </div>
+                        <div class="text-center">
+                            <span class="text-xl font-black text-slate-700 dark:text-slate-300">{{ lab.requested
+                                }}</span>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">{{ getPercentage(lab.requested,
+                                lab.total) }}% do total</p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex items-center gap-4 bg-primary/5 dark:bg-primary/10 p-4 rounded-xl border border-primary/20 shadow-sm transition-transform hover:-translate-y-1">
+                        <div
+                            class="size-10 rounded-full bg-white dark:bg-slate-900 border-4 border-primary flex items-center justify-center text-primary shadow-sm">
+                            <span class="material-symbols-outlined text-[18px] animate-spin-slow">sync</span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-slate-800 dark:text-slate-200">Em Processamento (Patologia)
+                            </p>
+                            <p class="text-xs text-slate-500">Técnicos trabalhando neste momento</p>
+                        </div>
+                        <div class="text-center">
+                            <span class="text-xl font-black text-primary">{{ lab.in_progress }}</span>
+                            <p class="text-[10px] font-bold text-primary/70 uppercase">{{ getPercentage(lab.in_progress,
+                                lab.total) }}% do total</p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex items-center gap-4 bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/30 shadow-sm transition-transform hover:-translate-y-1">
+                        <div
+                            class="size-10 rounded-full bg-white dark:bg-slate-900 border-4 border-emerald-500 flex items-center justify-center text-emerald-500 shadow-sm">
+                            <span class="material-symbols-outlined text-[18px]">task_alt</span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-slate-800 dark:text-slate-200">Laudos Emitidos</p>
+                            <p class="text-xs text-slate-500">Exames concluídos e anexados</p>
+                        </div>
+                        <div class="text-center">
+                            <span class="text-xl font-black text-emerald-600 dark:text-emerald-500">{{ lab.completed
+                                }}</span>
+                            <p class="text-[10px] font-bold text-emerald-600/70 uppercase">{{
+                                getPercentage(lab.completed, lab.total) }}% do total</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

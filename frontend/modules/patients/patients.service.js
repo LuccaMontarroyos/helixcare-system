@@ -80,5 +80,24 @@ angular.module("helixcare.patients").service("PatientsService", [
         });
       return deferred.promise;
     };
+
+    this.fetchCep = function(cep) {
+      var deferred = $q.defer();
+      var cleanCep = cep.replace(/\D/g, ''); 
+      
+      $http.get('https://viacep.com.br/ws/' + cleanCep + '/json/')
+        .then(function(response) {
+          if (response.data && response.data.erro) {
+            deferred.reject("CEP não encontrado.");
+          } else {
+            deferred.resolve(response.data);
+          }
+        })
+        .catch(function(error) {
+          deferred.reject("Falha na comunicação com o ViaCEP.");
+        });
+        
+      return deferred.promise;
+    };
   },
 ]);
