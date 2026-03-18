@@ -70,7 +70,7 @@
             </div>
 
             <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-                <a ui-sref="dashboard"
+                <a ui-sref="dashboard" hc-has-role="['ADMIN']"
                     ng-class="main.isStateActive('dashboard') ? 'bg-primary/10 text-primary border-r-4 border-primary font-bold' : 'text-slate-600 dark:text-slate-400 border-r-4 border-transparent hover:bg-primary/5 hover:text-primary font-medium'"
                     class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all cursor-pointer">
                     <span class="material-symbols-outlined">dashboard</span>

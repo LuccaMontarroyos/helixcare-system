@@ -82,10 +82,6 @@ angular
             requireAuth: true,
             allowedRoles: [
               "ADMIN",
-              "DOCTOR",
-              "RECEPTIONIST",
-              "NURSE",
-              "LAB_TECHNICIAN",
             ],
           },
         })
