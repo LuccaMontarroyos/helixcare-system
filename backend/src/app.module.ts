@@ -14,6 +14,7 @@ import { ExamsModule } from './modules/exams/exams.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { CloudService } from './core/cloud/cloud.service';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -32,7 +33,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         autoLoadModels: true,
-        synchronize: false,
+        synchronize: false, 
         logging: configService.get<string>('NODE_ENV') === 'development' ? console.log : false,
         define: {
           timestamps: true,
@@ -58,6 +59,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     ExamsModule,
     BillingModule,
     AnalyticsModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

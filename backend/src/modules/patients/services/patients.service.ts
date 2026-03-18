@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { CreationAttributes } from 'sequelize';
+import { CreationAttributes, Op } from 'sequelize';
 import { Patient } from '../entities/patient.entity';
 import { CreatePatientDto } from '../dto/create-patient.dto';
 import { UpdatePatientDto } from '../dto/update-patient.dto';
@@ -14,7 +14,7 @@ export class PatientsService {
     private patientModel: typeof Patient,
     private sequelize: Sequelize,
     private cloudService: CloudService,
-  ) {}
+  ) { }
 
   async create(dto: CreatePatientDto): Promise<Patient> {
     const patientExists = await this.patientModel.findOne({ where: { cpf: dto.cpf } });
@@ -26,7 +26,7 @@ export class PatientsService {
 
     try {
       const patient = await this.patientModel.create(dto as CreationAttributes<Patient>, { transaction });
-      
+
       await transaction.commit();
       return patient;
     } catch (error) {
@@ -36,7 +36,7 @@ export class PatientsService {
   }
 
   async update(id: string, dto: UpdatePatientDto): Promise<Patient> {
-    
+
     const patient = await this.findOne(id);
 
     if (dto.cpf && dto.cpf !== patient.cpf) {
@@ -50,10 +50,10 @@ export class PatientsService {
 
     try {
       const updatedPatient = await patient.update(
-        dto as Partial<CreationAttributes<Patient>>, 
+        dto as Partial<CreationAttributes<Patient>>,
         { transaction }
       );
-      
+
       await transaction.commit();
       return updatedPatient;
     } catch (error) {
@@ -62,9 +62,21 @@ export class PatientsService {
     }
   }
 
-  async findAll(): Promise<Patient[]> {
+  async findAll(search?: string): Promise<Patient[]> {
+
+    const whereClause: any = {};
+
+    if (search) {
+      whereClause[Op.or] = [
+        { name: { [Op.iLike]: `%${search}%` } },
+        { cpf: { [Op.iLike]: `%${search}%` } },
+      ];
+    }
+
     return await this.patientModel.findAll({
+      where: whereClause,
       order: [['created_at', 'DESC']],
+      limit: search ? 20 : undefined,
     });
   }
 
@@ -78,7 +90,7 @@ export class PatientsService {
 
   async remove(id: string): Promise<void> {
     const patient = await this.findOne(id);
-    
+
     await patient.destroy();
   }
 

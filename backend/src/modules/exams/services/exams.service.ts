@@ -12,6 +12,7 @@ import { UsersService } from '../../users/services/users.service';
 import { RoleEnum } from '../../roles/enums/roles.enum';
 import { User } from '../../users/entities/user.entity';
 import { CloudService } from 'src/core/cloud/cloud.service';
+import { Patient } from 'src/modules/patients/entities/patient.entity';
 
 @Injectable()
 export class ExamsService {
@@ -65,7 +66,8 @@ export class ExamsService {
       where: whereClause,
       include: [
         { model: User, as: 'doctor', attributes: ['id', 'name'] },
-        { model: User, as: 'lab_technician', attributes: ['id', 'name'] }
+        { model: User, as: 'lab_technician', attributes: ['id', 'name'] },
+        { model: Patient, as: 'patient', attributes: ['id', 'name', 'cpf']}
       ],
       order: [['created_at', 'DESC']],
       limit,
@@ -79,7 +81,8 @@ export class ExamsService {
     const exam = await this.examModel.findByPk(id, {
       include: [
         { model: User, as: 'doctor', attributes: ['id', 'name'] },
-        { model: User, as: 'lab_technician', attributes: ['id', 'name'] }
+        { model: User, as: 'lab_technician', attributes: ['id', 'name'] },
+        { model: Patient, as: 'patient', attributes: ['id', 'name', 'cpf']}
       ]
     });
     

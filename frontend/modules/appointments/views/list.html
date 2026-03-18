@@ -1,0 +1,328 @@
+<div class="mb-8 flex justify-between items-end animate-fade-in" ng-cloak>
+    <div>
+        <h1 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Agenda de Consultas</h1>
+        <p class="text-slate-500 dark:text-slate-400 mt-1">Gerencie agendamentos e acompanhe os atendimentos diários.
+        </p>
+    </div>
+
+    <button hc-has-role="['ADMIN', 'RECEPTIONIST']" ng-click="openModal()"
+        class="bg-primary text-white text-sm font-bold py-2 px-5 rounded-lg flex items-center gap-2 shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-base font-bold">add</span>
+        Novo Agendamento
+    </button>
+</div>
+
+<section
+    class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mb-8 animate-fade-in">
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2 text-slate-900 dark:text-white font-bold">
+            <span class="material-symbols-outlined text-primary">tune</span>
+            <h2>Filtros</h2>
+        </div>
+        <button ng-click="clearFilters()" class="text-xs font-bold text-slate-400 hover:text-primary transition-colors">
+            Limpar Filtros
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <div class="flex flex-col gap-1.5">
+            <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Data Exata</label>
+            <input type="date" ng-model="filters.date" ng-change="applyFilters()"
+                class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-2.5" />
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+            <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Status</label>
+            <select ng-model="filters.status" ng-change="applyFilters()"
+                class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-2.5">
+                <option value="">Todos</option>
+                <option value="SCHEDULED">Agendado</option>
+                <option value="CONFIRMED">Confirmado</option>
+                <option value="COMPLETED">Concluído</option>
+                <option value="CANCELED">Cancelado</option>
+            </select>
+        </div>
+
+        <div class="flex flex-col gap-1.5 relative">
+            <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Paciente</label>
+            <div class="relative">
+                <span
+                    class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">person_search</span>
+                <input type="text" ng-model="typeahead.patient.term" ng-model-options="{ debounce: 300 }"
+                    ng-change="searchPatients()" ng-blur="typeahead.patient.isOpen = false"
+                    class="w-full pl-9 pr-8 rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-2.5 transition-all shadow-sm"
+                    placeholder="Buscar por nome..." autocomplete="off" />
+
+                <span ng-show="typeahead.patient.loading" class="absolute right-3 top-1/2 -translate-y-1/2">
+                    <svg class="animate-spin h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            fill="currentColor"></path>
+                    </svg>
+                </span>
+            </div>
+
+            <div ng-show="typeahead.patient.isOpen"
+                class="absolute top-[100%] left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-[100] max-h-60 overflow-y-auto">
+                <ul class="py-1">
+                    <li ng-if="typeahead.patient.results.length === 0"
+                        class="px-4 py-3 text-sm text-slate-500 text-center">Nenhum paciente encontrado.</li>
+                    <li ng-repeat="p in typeahead.patient.results" ng-mousedown="selectPatient(p)"
+                        class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 transition-colors">
+                        <div class="font-bold text-sm text-slate-900 dark:text-slate-100">{{ p.name }}</div>
+                        <div class="text-xs text-slate-500 font-medium">CPF: {{ p.cpf | cpfFilter }}</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-1.5 relative" hc-has-role="['ADMIN', 'RECEPTIONIST']">
+            <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Médico (Staff)</label>
+            <div class="relative">
+                <span
+                    class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">stethoscope</span>
+                <input type="text" ng-model="typeahead.doctor.term" ng-model-options="{ debounce: 300 }"
+                    ng-change="searchDoctors()" ng-blur="typeahead.doctor.isOpen = false"
+                    class="w-full pl-9 pr-8 rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-2.5 transition-all shadow-sm"
+                    placeholder="Buscar por médico..." autocomplete="off" />
+
+                <span ng-show="typeahead.doctor.loading" class="absolute right-3 top-1/2 -translate-y-1/2">
+                    <svg class="animate-spin h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            fill="currentColor"></path>
+                    </svg>
+                </span>
+            </div>
+
+            <div ng-show="typeahead.doctor.isOpen"
+                class="absolute top-[100%] left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-[100] max-h-60 overflow-y-auto">
+                <ul class="py-1">
+                    <li ng-if="typeahead.doctor.results.length === 0"
+                        class="px-4 py-3 text-sm text-slate-500 text-center">Nenhum médico encontrado.</li>
+                    <li ng-repeat="doc in typeahead.doctor.results" ng-mousedown="selectDoctor(doc)"
+                        class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 transition-colors">
+                        <div class="font-bold text-sm text-slate-900 dark:text-slate-100">{{ doc.name }} <span
+                                class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded ml-1">{{ doc.role
+                                }}</span></div>
+                        <div class="text-xs text-slate-500 font-medium">E-mail: {{ doc.email }}</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<div class="flex flex-col items-center justify-center py-10" ng-if="isLoading">
+    <svg class="animate-spin h-8 w-8 text-primary mb-4" fill="none" viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            fill="currentColor"></path>
+    </svg>
+    <p class="text-slate-500 font-medium">Sincronizando agenda...</p>
+</div>
+
+<div class="bg-white dark:bg-slate-900 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-12 text-center"
+    ng-if="!isLoading && appointments.length === 0">
+    <span class="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600 mb-4">event_busy</span>
+    <h3 class="text-lg font-bold text-slate-700 dark:text-slate-300">Nenhuma consulta</h3>
+    <p class="text-sm text-slate-500 mt-1">Ajuste os filtros ou crie um novo agendamento.</p>
+</div>
+
+<div class="space-y-4 animate-fade-in" ng-if="!isLoading && appointments.length > 0">
+    <div ng-repeat="appt in appointments"
+        class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center gap-6"
+        ng-class="{'opacity-60 grayscale-[0.3]': appt.status === 'CANCELED' || appt.status === 'COMPLETED'}">
+
+        <div class="flex items-center gap-4 flex-1">
+            <div class="size-14 rounded-full overflow-hidden ring-2 shrink-0 flex items-center justify-center font-bold text-xl"
+                ng-class="appt.status === 'CANCELED' ? 'ring-slate-200 bg-slate-100 text-slate-400' : 'ring-primary/20 bg-primary/10 text-primary'">
+                {{ appt.patient.name.charAt(0) | uppercase }}
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-none mb-1">{{ appt.patient.name }}
+                </h3>
+                <p class="text-slate-500 text-sm flex items-center gap-1 font-medium">
+                    <span class="material-symbols-outlined text-[16px]">{{ getStatusConfig(appt.status).icon }}</span>
+                    {{ appt.appointment_date | date:'dd/MM/yyyy HH:mm' }}
+                </p>
+                <p class="text-xs text-slate-400 mt-0.5" ng-if="appt.notes">{{ appt.notes }}</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:items-end gap-1">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">Médico</span>
+            <span class="text-slate-700 dark:text-slate-200 font-semibold leading-none">{{ appt.doctor.name || 'N/A'
+                }}</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+                ng-class="getStatusConfig(appt.status).class">
+                {{ getStatusConfig(appt.status).text }}
+            </span>
+        </div>
+
+        <div
+            class="flex items-center gap-2 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-700 pt-4 md:pt-0 md:pl-6">
+
+            <button ng-if="appt.status === 'SCHEDULED'" hc-has-role="['RECEPTIONIST', 'ADMIN']"
+                ng-click="changeStatus(appt, 'CONFIRMED')"
+                class="flex items-center gap-2 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors">
+                Confirmar
+            </button>
+            <button ng-if="appt.status === 'CONFIRMED'" hc-has-role="['DOCTOR', 'ADMIN']"
+            ui-sref="patient-medical-records({patientId: appt.patient.id})"
+                class="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors shadow-sm">
+                <span class="material-symbols-outlined text-sm">play_arrow</span> Iniciar Consulta
+            </button>
+
+            <button hc-has-role="['ADMIN', 'RECEPTIONIST']" ng-click="openModal(appt)"
+                class="p-2 text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-primary/10"
+                title="Editar Agendamento">
+                <span class="material-symbols-outlined">edit</span>
+            </button>
+
+            <button hc-has-role="['ADMIN', 'RECEPTIONIST']" ng-click="deleteAppointment(appt)"
+                class="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                title="Apagar Agendamento">
+                <span class="material-symbols-outlined">delete</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="mt-8 flex flex-col sm:flex-row items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-6 animate-fade-in"
+    ng-if="pagination.totalPages > 1 && !isLoading">
+    <p class="text-sm text-slate-500 mb-4 sm:mb-0">
+        Mostrando página <strong>{{ filters.page }}</strong> de <strong>{{ pagination.totalPages }}</strong> ({{
+        pagination.totalItems }} registros)
+    </p>
+    <div class="flex gap-2">
+        <button ng-click="goToPage(filters.page - 1)" ng-disabled="filters.page === 1"
+            class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <span class="material-symbols-outlined text-sm">chevron_left</span>
+        </button>
+
+        <button ng-repeat="page in pageNumbers track by $index" ng-click="goToPage(page)"
+            ng-class="filters.page === page ? 'bg-primary/10 text-primary border-primary/20 font-bold' : 'border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-50 dark:text-slate-300'"
+            class="px-3.5 py-1.5 border rounded-lg transition-colors text-sm">
+            {{ page }}
+        </button>
+
+        <button ng-click="goToPage(filters.page + 1)" ng-disabled="filters.page === pagination.totalPages"
+            class="p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </button>
+    </div>
+</div>
+
+<div class="fixed inset-0 bg-slate-900/65 flex items-center justify-center z-[1000]" ng-show="isModalOpen" ng-cloak>
+    <div
+        class="bg-white dark:bg-slate-900 w-full max-w-[760px] rounded-2xl shadow-[0_20px_45px_rgba(15,23,42,0.35)] flex flex-col max-h-[90vh]">
+
+        <div
+            class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center shrink-0">
+            <h3 class="m-0 text-xl font-bold text-slate-900 dark:text-white">
+                {{ isEditMode ? 'Editar Agendamento' : 'Novo Agendamento' }}
+            </h3>
+            <button type="button"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-2xl leading-none transition-colors"
+                ng-click="closeModal()">
+                &times;
+            </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto">
+            <form ng-submit="saveAppointment()" class="flex flex-col gap-5">
+
+                <div class="relative flex flex-col gap-1.5">
+                    <label class="text-sm font-bold text-slate-700 dark:text-slate-300">Paciente <span
+                            class="text-red-500">*</span></label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm p-2.5 transition-all text-slate-900 dark:text-white"
+                        placeholder="Busque por Nome ou CPF..." ng-model="modalTypeahead.patient.term"
+                        ng-change="searchModalPatients()" ng-model-options="{ debounce: 300 }" autocomplete="off">
+
+                    <div class="absolute top-[100%] left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-[200] max-h-60 overflow-y-auto"
+                        ng-if="modalTypeahead.patient.isOpen && modalTypeahead.patient.results.length">
+                        <ul class="py-1">
+                            <li ng-repeat="p in modalTypeahead.patient.results" ng-click="selectModalPatient(p)"
+                                class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 transition-colors">
+                                <div class="font-bold text-sm text-slate-900 dark:text-slate-100">{{ p.name }}</div>
+                                <div class="text-xs text-slate-500 font-medium">CPF: {{ p.cpf | cpfFilter }}</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="relative flex flex-col gap-1.5">
+                    <label class="text-sm font-bold text-slate-700 dark:text-slate-300">Médico Responsável <span
+                            class="text-red-500">*</span></label>
+                    <input type="text"
+                        class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm p-2.5 transition-all text-slate-900 dark:text-white"
+                        placeholder="Busque por Nome ou E-mail..." ng-model="modalTypeahead.doctor.term"
+                        ng-change="searchModalDoctors()" ng-model-options="{ debounce: 300 }" autocomplete="off">
+
+                    <div class="absolute top-[100%] left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-[200] max-h-60 overflow-y-auto"
+                        ng-if="modalTypeahead.doctor.isOpen && modalTypeahead.doctor.results.length">
+                        <ul class="py-1">
+                            <li ng-repeat="d in modalTypeahead.doctor.results" ng-click="selectModalDoctor(d)"
+                                class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 transition-colors">
+                                <div class="font-bold text-sm text-slate-900 dark:text-slate-100">{{ d.name }}</div>
+                                <div class="text-xs text-slate-500 font-medium">E-mail: {{ d.email }}</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-sm font-bold text-slate-700 dark:text-slate-300">Data <span
+                                class="text-red-500">*</span></label>
+                        <input type="date"
+                            class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm p-2.5 transition-all text-slate-900 dark:text-white"
+                            ng-model="appointmentForm.date">
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-sm font-bold text-slate-700 dark:text-slate-300">Hora <span
+                                class="text-red-500">*</span></label>
+                        <input type="time"
+                            class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm p-2.5 transition-all text-slate-900 dark:text-white"
+                            ng-model="appointmentForm.time">
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-bold text-slate-700 dark:text-slate-300">Observações</label>
+                    <textarea
+                        class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm p-2.5 transition-all text-slate-900 dark:text-white"
+                        rows="3" ng-model="appointmentForm.notes"
+                        placeholder="Queixas, sintomas, observações adicionais..."></textarea>
+                </div>
+            </form>
+        </div>
+
+        <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3 shrink-0">
+            <button type="button"
+                class="px-4 py-2 rounded-lg font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+                ng-click="closeModal()">
+                Cancelar
+            </button>
+            <button type="button"
+                class="px-5 py-2 rounded-lg font-bold bg-primary text-white hover:brightness-105 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                ng-click="saveAppointment()"
+                ng-disabled="isSaving || !appointmentForm.patient_id || !appointmentForm.doctor_id || !appointmentForm.date || !appointmentForm.time">
+                {{ isSaving ? 'Salvando...' : (isEditMode ? 'Atualizar' : 'Agendar') }}
+            </button>
+        </div>
+    </div>
+</div>

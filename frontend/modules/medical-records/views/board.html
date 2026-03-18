@@ -1,0 +1,261 @@
+<div class="animate-fade-in" ng-if="!isLoading && patient" ng-cloak>
+
+    <section
+        class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm mb-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="flex items-center gap-6">
+                <div class="relative">
+                    <div
+                        class="h-24 w-24 rounded-2xl overflow-hidden border-4 border-slate-50 dark:border-slate-800 shadow-lg flex items-center justify-center bg-slate-100 text-primary text-3xl font-bold">
+                        <img ng-if="patient.avatar_url" ng-src="{{patient.avatar_url}}"
+                            class="w-full h-full object-cover">
+                        <span ng-if="!patient.avatar_url">{{ patient.name.charAt(0) | uppercase }}</span>
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-50">{{ patient.name }}</h1>
+                    </div>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        <span class="flex items-center gap-1.5"><span
+                                class="material-symbols-outlined text-lg">id_card</span> CPF: {{ patient.cpf | cpfFilter
+                            }}</span>
+                        <span class="flex items-center gap-1.5"><span
+                                class="material-symbols-outlined text-lg text-red-500">bloodtype</span> Sangue: {{
+                            patient.blood_type || 'N/I' }}</span>
+                        <span class="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-medium"
+                            ng-if="patient.allergies">
+                            <span class="material-symbols-outlined text-lg">warning</span> Alergias: {{
+                            patient.allergies }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button ui-sref="patient-detail({id: patient.id})"
+                    class="flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold text-sm transition-all text-slate-700 dark:text-slate-300">
+                    <span class="material-symbols-outlined text-lg">visibility</span> Visão 360º
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <aside class="lg:col-span-4 flex flex-col gap-4">
+            <div class="flex items-center justify-between px-2">
+                <h3 class="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-white">
+                    <span class="material-symbols-outlined text-primary">history</span> Histórico Clínico
+                </h3>
+            </div>
+
+            <div
+                class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 overflow-y-auto max-h-[600px] shadow-sm">
+
+                <div ng-if="history.length === 0" class="text-center p-6 text-slate-500">
+                    <span class="material-symbols-outlined text-4xl mb-2 opacity-50">assignment_add</span>
+                    <p class="text-sm">Nenhum registro encontrado para este paciente.</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="relative timeline-item cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 p-2 rounded-lg transition-colors"
+                        ng-repeat="record in history" ng-click="viewRecord(record)">
+                        <div class="flex gap-4 timeline-line">
+                            <div
+                                class="z-10 flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center border-2 border-white dark:border-slate-900">
+                                <span class="material-symbols-outlined text-xl">stethoscope</span>
+                            </div>
+                            <div class="flex-1 pb-4 border-b border-slate-100 dark:border-slate-800">
+                                <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">{{
+                                    record.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
+                                <h4 class="text-sm font-bold mt-0.5 text-slate-800 dark:text-slate-100">{{ record.title
+                                    || 'Evolução' }}</h4>
+                                <p class="text-xs text-slate-500 mt-1 italic">{{ record.doctor_name || 'Staff' }}</p>
+                                <div
+                                    class="mt-2 text-xs text-slate-600 dark:text-slate-400 line-clamp-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded">
+                                    {{ record.notes }}
+                                </div>
+                                <div class="mt-3 flex flex-wrap gap-2"
+                                    ng-if="record.attachments && record.attachments.length > 0">
+                                    <a ng-repeat="att in record.attachments" ng-href="{{ att.url }}" target="_blank"
+                                        ng-click="$event.stopPropagation()"
+                                        class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[11px] font-bold rounded-lg flex items-center gap-1.5 transition-colors shadow-sm"
+                                        title="{{ att.name }}">
+                                        <span class="material-symbols-outlined text-[14px] text-primary">
+                                            {{ (att.name || '').toLowerCase().includes('.pdf') ? 'picture_as_pdf' :
+                                            'image' }}
+                                        </span>
+                                        <span class="truncate max-w-[150px]">{{ att.name }}</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="lg:col-span-8 flex flex-col gap-4">
+            <div class="flex items-center justify-between px-2">
+                <h3 class="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-white">
+                    <span class="material-symbols-outlined text-primary">edit_note</span>
+                    {{ editor.isNew ? 'Nova Evolução' : 'Visualizando Registro' }}
+                </h3>
+                <button ng-if="!editor.isNew" ng-click="startNewEvolution()"
+                    class="text-xs font-bold text-primary hover:underline flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">add</span> Escrever Nova
+                </button>
+            </div>
+
+            <div
+                class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm flex flex-col overflow-hidden">
+
+                <div ng-if="editor.isLocked"
+                    class="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-900/40 p-4 flex items-center justify-between animate-fade-in">
+                    <div class="flex items-center gap-3 text-amber-800 dark:text-amber-400">
+                        <span class="material-symbols-outlined">lock</span>
+                        <div>
+                            <p class="text-sm font-bold">Registro em uso por {{ editor.lockedBy }}</p>
+                            <p class="text-xs opacity-80">Este registro está travado para edição no momento para evitar
+                                perda de dados.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div ng-if="!editor.isNew && !editor.isLocked"
+                    class="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-900/40 p-4 flex items-center gap-3 text-blue-800 dark:text-blue-400">
+                    <span class="material-symbols-outlined">edit</span>
+                    <p class="text-sm font-bold">Modo de Edição Ativo. Você detém a trava deste registro.</p>
+                </div>
+
+                <div class="p-6 space-y-6">
+
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-widest">Diagnóstico (CID
+                            opcional)</label>
+                        <input type="text" ng-model="editor.diagnosis" ng-disabled="editor.isLocked"
+                            class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-lg font-bold text-slate-900 dark:text-white placeholder:text-slate-300 px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                            placeholder="Ex: Enxaqueca (G43)">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label
+                            class="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                            Anamnese e Evolução <span class="text-red-500">*</span>
+                        </label>
+                        <textarea ng-model="editor.anamnesis" ng-disabled="editor.isLocked"
+                            class="w-full min-h-[150px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 resize-y placeholder:text-slate-400 text-sm leading-relaxed px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                            placeholder="Descreva a queixa principal, exame físico e evolução clínica..."></textarea>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-widest">Prescrição e Conduta
+                            Médica</label>
+                        <textarea ng-model="editor.prescription" ng-disabled="editor.isLocked"
+                            class="w-full min-h-[100px] bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/60 dark:border-amber-800/40 rounded-lg text-slate-700 dark:text-slate-300 resize-y placeholder:text-slate-400/70 text-sm leading-relaxed px-4 py-3 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                            placeholder="Ex: Paracetamol 750mg de 8/8h. Repouso de 3 dias."></textarea>
+                    </div>
+
+                    <div
+                        class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900">
+                        <h4
+                            class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[16px] text-primary">psychology</span> Hábitos
+                            Sociais
+                        </h4>
+
+                        <div class="flex flex-wrap gap-6 mb-4">
+                            <label class="flex items-center gap-2 cursor-pointer group">
+                                <input type="checkbox" ng-model="editor.social_history.is_smoker"
+                                    ng-disabled="editor.isLocked"
+                                    class="w-4 h-4 text-primary bg-slate-100 border-slate-300 rounded focus:ring-primary focus:ring-2 dark:bg-slate-700 dark:border-slate-600 transition-all">
+                                <span
+                                    class="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">Tabagismo
+                                    (Fumante)</span>
+                            </label>
+
+                            <label class="flex items-center gap-2 cursor-pointer group">
+                                <input type="checkbox" ng-model="editor.social_history.consumes_alcohol"
+                                    ng-disabled="editor.isLocked"
+                                    class="w-4 h-4 text-primary bg-slate-100 border-slate-300 rounded focus:ring-primary focus:ring-2 dark:bg-slate-700 dark:border-slate-600 transition-all">
+                                <span
+                                    class="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">Etilismo
+                                    (Consome Álcool)</span>
+                            </label>
+                        </div>
+
+                        <div class="space-y-1">
+                            <input type="text" ng-model="editor.social_history.notes" ng-disabled="editor.isLocked"
+                                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 px-4 py-2 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                placeholder="Observações de hábitos (Ex: Bebedor social aos finais de semana, sedentário...)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-slate-800/30 p-6 border-t border-slate-200 dark:border-slate-800">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300">Anexos Exames/Laudos ({{
+                            editor.attachments.length }})</h4>
+
+                        <label ng-if="!editor.isLocked"
+                            class="cursor-pointer flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-bold hover:shadow-sm transition-all text-slate-700 dark:text-white">
+                            <span class="material-symbols-outlined text-sm">attach_file</span> Anexar
+                            <input class="hidden" type="file" multiple
+                                onchange="angular.element(this).scope().addAttachment(this)" />
+                        </label>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" ng-if="editor.attachments.length > 0">
+                        <div ng-repeat="file in editor.attachments track by $index"
+                            class="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl group shadow-sm">
+                            <div class="flex items-center gap-3 overflow-hidden">
+                                <div class="text-primary bg-primary/10 p-2 rounded-lg flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-2xl">
+                                        {{ (file.name || '').toLowerCase().includes('.pdf') ? 'picture_as_pdf' : 'image'
+                                        }}
+                                    </span>
+                                </div>
+                                <div class="truncate">
+                                    <a ng-if="file.url" ng-href="{{ file.url }}" target="_blank"
+                                        class="text-xs font-bold truncate text-primary hover:underline"
+                                        title="{{ file.name }}">
+                                        {{ file.name }}
+                                    </a>
+
+                                    <p ng-if="!file.url"
+                                        class="text-xs font-bold truncate text-slate-700 dark:text-slate-200"
+                                        title="{{ file.name }}">
+                                        {{ file.name }}
+                                    </p>
+
+                                    <p class="text-[10px] font-semibold text-slate-400 mt-0.5 uppercase"
+                                        ng-if="file.size">
+                                        {{ (file.size / 1024 / 1024).toFixed(2) }} MB
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button type="button" ng-if="!editor.isLocked && !file.url"
+                                ng-click="removeAttachment($index)"
+                                class="text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-all p-1.5">
+                                <span class="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3 bg-white dark:bg-slate-900">
+                    <button type="button" ng-click="startNewEvolution(true)"
+                        class="px-6 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">Descartar</button>
+                    <button ng-click="saveEvolution()" ng-disabled="editor.isLocked || isSaving"
+                        class="px-8 py-2 bg-primary text-white text-sm font-bold rounded-lg shadow-md hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span class="material-symbols-outlined text-sm" ng-hide="isSaving">save</span>
+                        <span ng-if="isSaving" class="material-symbols-outlined text-sm animate-spin">autorenew</span>
+                        {{ isSaving ? 'Salvando...' : 'Salvar Evolução' }}
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>

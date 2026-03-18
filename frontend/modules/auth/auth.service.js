@@ -7,9 +7,16 @@ angular.module('helixcare.auth')
 
         $http.post(API_URL + '/login', credentials)
             .success(function(response) {
-                $window.localStorage.setItem('hc_token', response.token);
-                $window.localStorage.setItem('hc_user', JSON.stringify(response.user));
-                deferred.resolve(response.user);
+                console.log("Payload de Login recebido do backend:", response);
+                var token = response.access_token || response.token;
+                var user = response.user || { role: response.role };
+                if (token) {
+                    $window.localStorage.setItem('hc_token', token);
+                    $window.localStorage.setItem('hc_user', JSON.stringify(user));
+                    deferred.resolve(user);
+                } else {
+                    deferred.reject({ message: "Token não encontrado na resposta do servidor." });
+                }
             })
             .error(function(err) {
                 deferred.reject(err);

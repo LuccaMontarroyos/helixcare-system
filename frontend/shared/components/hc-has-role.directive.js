@@ -1,4 +1,4 @@
-angular.module('helixcare')
+    angular.module('helixcare')
 .directive('hcHasRole', ['AuthService', function(AuthService) {
     return {
         restrict: 'A',

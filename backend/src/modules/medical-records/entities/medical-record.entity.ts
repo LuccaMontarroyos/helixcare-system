@@ -8,6 +8,11 @@ export interface SocialHistory {
   notes?: string;
 }
 
+export interface Attachment {
+  name: string;
+  url: string;
+}
+
 @Table({
   tableName: 'medical_records',
   underscored: true,
@@ -48,8 +53,8 @@ export class MedicalRecord extends Model<MedicalRecord> {
   @Column({ type: DataType.JSONB, allowNull: true })
   declare social_history: SocialHistory;
 
-  @Column({ type: DataType.ARRAY(DataType.STRING(500)), allowNull: true, defaultValue: [] })
-  declare attachments: string[];
+  @Column({ type: DataType.JSONB, allowNull: true, defaultValue: [] })
+  declare attachments: Attachment[];
 
   @CreatedAt
   declare created_at: Date;

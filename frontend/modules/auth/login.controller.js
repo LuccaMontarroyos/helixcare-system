@@ -1,5 +1,5 @@
 angular.module('helixcare.auth')
-.controller('LoginController', ['$scope', '$state', 'AuthService', function($scope, $state, AuthService) {
+.controller('LoginController', ['$scope', '$state', 'AuthService', 'ToastService', function($scope, $state, AuthService, ToastService) {
     
     $scope.credentials = {
         email: '',
@@ -20,11 +20,15 @@ angular.module('helixcare.auth')
 
         AuthService.login($scope.credentials)
             .then(function(user) {
-                console.log("Bem-vindo, " + user.role);
-                $state.go('dashboard');
+                ToastService.success("Bem-vindo(a) ao sistema, " + (user.name || ''), "Autenticado");
+                $state.go('patients');
             })
             .catch(function(error) {
-                $scope.errorMessage = error.message || "Credenciais inválidas. Tente novamente.";
+                if (!error) {
+                    $scope.errorMessage = "Servidor indisponível. Verifique sua conexão.";
+                } else {
+                    $scope.errorMessage = error.message || error.error || "Credenciais inválidas. Tente novamente.";
+                }
             })
             .finally(function() {
                 $scope.isLoading = false;

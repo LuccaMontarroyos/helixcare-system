@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException, ConflictException } 
 import { InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { CreationAttributes, Op } from 'sequelize';
-import { MedicalRecord } from '../entities/medical-record.entity';
+import { Attachment, MedicalRecord } from '../entities/medical-record.entity';
 import { CreateMedicalRecordDto } from '../dto/create-medical-record.dto';
 import { PatientsService } from '../../patients/services/patients.service';
 import { User } from '../../users/entities/user.entity';
@@ -162,8 +162,14 @@ export class MedicalRecordsService {
 
     const fileUrl = await this.cloudService.uploadFile(file);
 
+    const newAttachment: Attachment = {
+      name: file.originalname,
+      url: fileUrl,
+    };
+
     const currentAttachments = record.attachments || [];
-    const updatedAttachments = [...currentAttachments, fileUrl];
+
+    const updatedAttachments = [...currentAttachments, newAttachment];
 
     return await record.update({ attachments: updatedAttachments });
   }
