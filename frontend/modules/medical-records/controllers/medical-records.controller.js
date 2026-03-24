@@ -8,6 +8,7 @@ angular
     "MedicalRecordsService",
     "PatientsService",
     "AppointmentsService",
+    "AuthService",
     "ToastService",
     function (
       $scope,
@@ -17,8 +18,11 @@ angular
       MedicalRecordsService,
       PatientsService,
       AppointmentsService,
+      AuthService,
       ToastService,
     ) {
+
+      $scope.currentUser = AuthService.getCurrentUser();
       $scope.patient = null;
       $scope.history = [];
       $scope.isLoading = true;
@@ -35,7 +39,7 @@ angular
           notes: "",
         },
         attachments: [],
-        isLocked: false,
+        isLockedByOther: false,
         lockedBy: null,
       };
 
@@ -72,7 +76,7 @@ angular
             notes: "",
           },
           attachments: [],
-          isLocked: false,
+          isLockedByOther: false,
           lockedBy: null,
         };
 
@@ -90,34 +94,49 @@ angular
           anamnesis: record.anamnesis || record.notes,
           diagnosis: record.diagnosis,
           prescription: record.prescription,
-          social_history: record.social_history || {
-            is_smoker: false,
-            consumes_alcohol: false,
-            notes: "",
-          },
+          social_history: record.social_history || { is_smoker: false, consumes_alcohol: false, notes: "" },
           attachments: record.attachments || [],
-          isLocked: false,
+          isLockedByOther: false,
           lockedBy: null,
         };
 
-        MedicalRecordsService.lockRecord(record.id).catch(function (err) {
-          $scope.editor.isLocked = true;
-          $scope.editor.lockedBy = err.lockedBy || "Outro profissional";
-          ToastService.warning(
-            "Este registro está sendo editado por " + $scope.editor.lockedBy,
-          );
-        });
+        MedicalRecordsService.getLockStatus(record.id)
+          .then(function (status) {
+            var isLocked = status.isLocked;
+            var lockedBy = status.lockedBy;
+
+            if (isLocked && lockedBy !== $scope.currentUser.id && lockedBy !== $scope.currentUser.name) {
+              $scope.editor.isLockedByOther = true;
+              $scope.editor.lockedBy = lockedBy || "Outro profissional";
+              ToastService.warning("Atenção: Este prontuário está sendo editado por " + $scope.editor.lockedBy);
+            } else {
+              MedicalRecordsService.lockRecord(record.id)
+                .then(function () {
+                  $scope.editor.isLockedByOther = false;
+                  $scope.editor.lockedBy = $scope.currentUser.name;
+                })
+                .catch(function (err) {
+                  $scope.editor.isLockedByOther = true;
+                  $scope.editor.lockedBy = err.lockedBy || "Outro profissional";
+                  ToastService.warning("O registro acabou de ser travado por " + $scope.editor.lockedBy);
+                });
+            }
+          })
+          .catch(function (err) {
+            console.error("Erro ao verificar status da trava:", err);
+          });
       };
 
       $scope.releaseLock = function () {
-        if (
-          !$scope.editor.isNew &&
-          $scope.editor.id &&
-          !$scope.editor.isLocked
-        ) {
-          MedicalRecordsService.unlockRecord($scope.editor.id);
+
+        if (!$scope.editor.isNew && $scope.editor.id && !$scope.editor.isLockedByOther) {
+          MedicalRecordsService.unlockRecord($scope.editor.id).catch(angular.noop);
         }
       };
+
+      $scope.$on("$destroy", function () {
+        $scope.releaseLock();
+      });
 
       $scope.$on("$destroy", function () {
         $scope.releaseLock();
