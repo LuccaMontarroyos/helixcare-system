@@ -143,7 +143,7 @@ angular
           },
         })
         .state("patient-medical-records", {
-          url: "/patients/:patientId/medical-records",
+          url: "/patients/:patientId/medical-records?appointmentId",
           templateUrl: "modules/medical-records/views/board.html",
           controller: "MedicalRecordsController",
           data: {

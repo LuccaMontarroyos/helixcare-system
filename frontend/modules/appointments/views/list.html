@@ -180,7 +180,7 @@
                 Confirmar
             </button>
             <button ng-if="appt.status === 'CONFIRMED'" hc-has-role="['DOCTOR', 'ADMIN']"
-            ui-sref="patient-medical-records({patientId: appt.patient.id})"
+            ui-sref="patient-medical-records({patientId: appt.patient.id, appointmentId: appt.id})"
                 class="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors shadow-sm">
                 <span class="material-symbols-outlined text-sm">play_arrow</span> Iniciar Consulta
             </button>

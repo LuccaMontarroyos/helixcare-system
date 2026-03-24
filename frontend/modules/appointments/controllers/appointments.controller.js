@@ -154,21 +154,24 @@ angular.module("helixcare.appointments").controller("AppointmentsController", [
 
         $scope.changeStatus = function (appointment, newStatus) {
             var originalStatus = appointment.status;
+            
             appointment.status = newStatus;
 
             var payload = {
-                patient_id: appointment.patient.id,
-                doctor_id: appointment.doctor ? appointment.doctor.id : null,
+                patient_id: appointment.patient ? appointment.patient.id : (appointment.patient_id || null),
+                doctor_id: appointment.doctor ? appointment.doctor.id : (appointment.doctor_id || null),
                 appointment_date: appointment.appointment_date,
                 notes: appointment.notes || "",
-                status: newStatus,
+                status: newStatus
             };
 
-            AppointmentsService.updateAppointment(appointment.id, payload)
-                .then(function () { ToastService.success("Status atualizado para " + newStatus); })
+            AppointmentsService.updateStatus(appointment.id, payload)
+                .then(function () { 
+                    ToastService.success("Status da consulta atualizado para " + newStatus); 
+                })
                 .catch(function (err) {
                     appointment.status = originalStatus;
-                    var msg = err.message || err.error || "Falha ao atualizar o status.";
+                    var msg = err.message || err.error || "Falha ao atualizar o status na API.";
                     if (angular.isArray(msg)) msg = msg.join("<br>");
                     ToastService.error(msg, "Erro");
                 });

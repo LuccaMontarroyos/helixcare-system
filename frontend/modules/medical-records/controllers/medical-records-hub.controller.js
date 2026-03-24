@@ -43,8 +43,8 @@ angular.module('helixcare.medicalRecords')
                 });
         };
 
-        $scope.attendPatient = function(patientId) {
-            $state.go('patient-medical-records', { patientId: patientId });
+        $scope.attendPatient = function(patientId, appointmentId) {
+            $state.go('patient-medical-records', { patientId: patientId, appointmentId: appointmentId });
         };
 
         $scope.init();

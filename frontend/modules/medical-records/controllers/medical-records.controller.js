@@ -175,39 +175,55 @@ angular
             }
             return res;
           })
-          .then(function () {
+          .then(function (res) {
+            var isNewEvolution = $scope.editor.isNew;
+            var sourceAppointmentId = $stateParams.appointmentId;
+
+            if (isNewEvolution && sourceAppointmentId) {
+              AppointmentsService.getAppointmentById(sourceAppointmentId)
+                .then(function (appt) {
+                  if (appt.status === "CONFIRMED") {
+                    var payload = {
+                      patient_id: appt.patient
+                        ? appt.patient.id
+                        : appt.patient_id || null,
+                      doctor_id: appt.doctor
+                        ? appt.doctor.id
+                        : appt.doctor_id || null,
+                      appointment_date: appt.appointment_date,
+                      notes: appt.notes || "",
+                      status: "COMPLETED",
+                    };
+
+                    return AppointmentsService.updateAppointment(
+                      appt.id,
+                      payload,
+                    );
+                  } else {
+                    console.warn(
+                      "[ALERTA] A consulta não está CONFIRMED. Status atual:",
+                      appt.status,
+                    );
+                    return $q.reject("Status_Invalido");
+                  }
+                })
+                .then(function () {
+                  ToastService.info(
+                    "A consulta na agenda foi marcada como concluída.",
+                  );
+                })
+                .catch(function (err) {
+                  if (err !== "Status_Invalido") {
+                    console.error(
+                      "[ERRO FATAL NA AUTOMAÇÃO] Falha ao atualizar agenda:",
+                      err,
+                    );
+                  }
+                });
+            }
             ToastService.success("Evolução salva com sucesso!");
             $scope.init();
             $scope.startNewEvolution();
-
-            if ($scope.editor.isNew) {
-              var today = new Date();
-              var dateString =
-                today.getFullYear() +
-                "-" +
-                String(today.getMonth() + 1).padStart(2, "0") +
-                "-" +
-                String(today.getDate()).padStart(2, "0");
-
-              AppointmentsService.getAppointments({
-                patient_id: $scope.patient.id,
-                date: dateString,
-                status: "CONFIRMED",
-              }).then(function (res) {
-                var appointments = res.items || res.data || res;
-                if (appointments && appointments.length > 0) {
-                  AppointmentsService.updateAppointment(appointments[0].id, {
-                    patient_id: $scope.patient.id,
-                    appointment_date: appointments[0].appointment_date,
-                    status: "COMPLETED",
-                  }).then(function () {
-                    console.log(
-                      "Automação: Consulta do paciente baixada para COMPLETED automaticamente.",
-                    );
-                  });
-                }
-              });
-            }
           })
           .catch(function (err) {
             var msg =
