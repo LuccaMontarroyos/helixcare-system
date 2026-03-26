@@ -10,6 +10,14 @@ angular.module('helixcare.appointments')
         return deferred.promise;
     };
 
+    this.getAppointmentById = function(id) {
+        var deferred = $q.defer();
+        $http.get(API_URL + '/' + id)
+            .then(function(response) { deferred.resolve(response.data); })
+            .catch(function(error) { deferred.reject(error.data || error); });
+        return deferred.promise;
+    };
+
     this.createAppointment = function(payload) {
         var deferred = $q.defer();
         $http.post(API_URL, payload)
@@ -18,9 +26,9 @@ angular.module('helixcare.appointments')
         return deferred.promise;
     };
 
-    this.updateStatus = function(id, newStatus) {
+    this.updateStatus = function(id, payload) {
         var deferred = $q.defer();
-        $http.put(API_URL + '/' + id, { status: newStatus })
+        $http.put(API_URL + '/' + id, payload)
             .then(function(response) { deferred.resolve(response.data); })
             .catch(function(error) { deferred.reject(error.data || error); });
         return deferred.promise;

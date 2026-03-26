@@ -8,6 +8,7 @@ angular
     "MedicalRecordsService",
     "PatientsService",
     "AppointmentsService",
+    "AuthService",
     "ToastService",
     function (
       $scope,
@@ -17,8 +18,11 @@ angular
       MedicalRecordsService,
       PatientsService,
       AppointmentsService,
+      AuthService,
       ToastService,
     ) {
+
+      $scope.currentUser = AuthService.getCurrentUser();
       $scope.patient = null;
       $scope.history = [];
       $scope.isLoading = true;
@@ -35,7 +39,7 @@ angular
           notes: "",
         },
         attachments: [],
-        isLocked: false,
+        isLockedByOther: false,
         lockedBy: null,
       };
 
@@ -72,7 +76,7 @@ angular
             notes: "",
           },
           attachments: [],
-          isLocked: false,
+          isLockedByOther: false,
           lockedBy: null,
         };
 
@@ -90,34 +94,49 @@ angular
           anamnesis: record.anamnesis || record.notes,
           diagnosis: record.diagnosis,
           prescription: record.prescription,
-          social_history: record.social_history || {
-            is_smoker: false,
-            consumes_alcohol: false,
-            notes: "",
-          },
+          social_history: record.social_history || { is_smoker: false, consumes_alcohol: false, notes: "" },
           attachments: record.attachments || [],
-          isLocked: false,
+          isLockedByOther: false,
           lockedBy: null,
         };
 
-        MedicalRecordsService.lockRecord(record.id).catch(function (err) {
-          $scope.editor.isLocked = true;
-          $scope.editor.lockedBy = err.lockedBy || "Outro profissional";
-          ToastService.warning(
-            "Este registro está sendo editado por " + $scope.editor.lockedBy,
-          );
-        });
+        MedicalRecordsService.getLockStatus(record.id)
+          .then(function (status) {
+            var isLocked = status.isLocked;
+            var lockedBy = status.lockedBy;
+
+            if (isLocked && lockedBy !== $scope.currentUser.id && lockedBy !== $scope.currentUser.name) {
+              $scope.editor.isLockedByOther = true;
+              $scope.editor.lockedBy = lockedBy || "Outro profissional";
+              ToastService.warning("Atenção: Este prontuário está sendo editado por " + $scope.editor.lockedBy);
+            } else {
+              MedicalRecordsService.lockRecord(record.id)
+                .then(function () {
+                  $scope.editor.isLockedByOther = false;
+                  $scope.editor.lockedBy = $scope.currentUser.name;
+                })
+                .catch(function (err) {
+                  $scope.editor.isLockedByOther = true;
+                  $scope.editor.lockedBy = err.lockedBy || "Outro profissional";
+                  ToastService.warning("O registro acabou de ser travado por " + $scope.editor.lockedBy);
+                });
+            }
+          })
+          .catch(function (err) {
+            console.error("Erro ao verificar status da trava:", err);
+          });
       };
 
       $scope.releaseLock = function () {
-        if (
-          !$scope.editor.isNew &&
-          $scope.editor.id &&
-          !$scope.editor.isLocked
-        ) {
-          MedicalRecordsService.unlockRecord($scope.editor.id);
+
+        if (!$scope.editor.isNew && $scope.editor.id && !$scope.editor.isLockedByOther) {
+          MedicalRecordsService.unlockRecord($scope.editor.id).catch(angular.noop);
         }
       };
+
+      $scope.$on("$destroy", function () {
+        $scope.releaseLock();
+      });
 
       $scope.$on("$destroy", function () {
         $scope.releaseLock();
@@ -175,39 +194,55 @@ angular
             }
             return res;
           })
-          .then(function () {
+          .then(function (res) {
+            var isNewEvolution = $scope.editor.isNew;
+            var sourceAppointmentId = $stateParams.appointmentId;
+
+            if (isNewEvolution && sourceAppointmentId) {
+              AppointmentsService.getAppointmentById(sourceAppointmentId)
+                .then(function (appt) {
+                  if (appt.status === "CONFIRMED") {
+                    var payload = {
+                      patient_id: appt.patient
+                        ? appt.patient.id
+                        : appt.patient_id || null,
+                      doctor_id: appt.doctor
+                        ? appt.doctor.id
+                        : appt.doctor_id || null,
+                      appointment_date: appt.appointment_date,
+                      notes: appt.notes || "",
+                      status: "COMPLETED",
+                    };
+
+                    return AppointmentsService.updateAppointment(
+                      appt.id,
+                      payload,
+                    );
+                  } else {
+                    console.warn(
+                      "[ALERTA] A consulta não está CONFIRMED. Status atual:",
+                      appt.status,
+                    );
+                    return $q.reject("Status_Invalido");
+                  }
+                })
+                .then(function () {
+                  ToastService.info(
+                    "A consulta na agenda foi marcada como concluída.",
+                  );
+                })
+                .catch(function (err) {
+                  if (err !== "Status_Invalido") {
+                    console.error(
+                      "[ERRO FATAL NA AUTOMAÇÃO] Falha ao atualizar agenda:",
+                      err,
+                    );
+                  }
+                });
+            }
             ToastService.success("Evolução salva com sucesso!");
             $scope.init();
             $scope.startNewEvolution();
-
-            if ($scope.editor.isNew) {
-              var today = new Date();
-              var dateString =
-                today.getFullYear() +
-                "-" +
-                String(today.getMonth() + 1).padStart(2, "0") +
-                "-" +
-                String(today.getDate()).padStart(2, "0");
-
-              AppointmentsService.getAppointments({
-                patient_id: $scope.patient.id,
-                date: dateString,
-                status: "CONFIRMED",
-              }).then(function (res) {
-                var appointments = res.items || res.data || res;
-                if (appointments && appointments.length > 0) {
-                  AppointmentsService.updateAppointment(appointments[0].id, {
-                    patient_id: $scope.patient.id,
-                    appointment_date: appointments[0].appointment_date,
-                    status: "COMPLETED",
-                  }).then(function () {
-                    console.log(
-                      "Automação: Consulta do paciente baixada para COMPLETED automaticamente.",
-                    );
-                  });
-                }
-              });
-            }
           })
           .catch(function (err) {
             var msg =

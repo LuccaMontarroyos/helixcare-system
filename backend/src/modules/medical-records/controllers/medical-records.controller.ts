@@ -81,6 +81,17 @@ export class MedicalRecordsController {
     return { message: 'Prontuário travado com sucesso para edição.' };
   }
 
+  @Get(':id/lock-status')
+  @ApiOperation({ summary: 'Verifica o status atual de travamento de um prontuário' })
+  @Roles(RoleEnum.ADMIN, RoleEnum.DOCTOR, RoleEnum.NURSE)
+  async checkLockStatus(@Param('id') id: string) {
+    const ownerId = await this.redisLockService.getLockOwner(id);
+    return {
+      isLocked: !!ownerId,
+      lockedBy: ownerId || null,
+    };
+  }
+
   @Post(':id/unlock')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Libera a trava de um prontuário manualmente' })

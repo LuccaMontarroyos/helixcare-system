@@ -34,6 +34,14 @@ angular.module('helixcare.medicalRecords')
         return deferred.promise;
     };
 
+    this.getLockStatus = function(id) {
+        var deferred = $q.defer();
+        $http.get(API_URL + '/' + id + '/lock-status')
+            .then(function(res) { deferred.resolve(res.data); })
+            .catch(function(err) { deferred.reject(err.data || err); });
+        return deferred.promise;
+    };
+
     this.unlockRecord = function(id) {
         return $http.post(API_URL + '/' + id + '/unlock', {}); 
     };
