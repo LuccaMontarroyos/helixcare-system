@@ -114,6 +114,86 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
         });
     };
 
+    $scope.isAppointmentModalOpen = false;
+    $scope.isSavingAppointment = false;
+    $scope.newAppointmentForm = { date: null, time: null, doctor_id: null, notes: '' };
+    $scope.doctorTypeahead = { term: "", results: [], isOpen: false, loading: false };
+
+    $scope.openAppointmentModal = function() {
+        $scope.newAppointmentForm = { date: null, time: null, doctor_id: null, notes: '' };
+        $scope.doctorTypeahead = { term: "", results: [], isOpen: false, loading: false };
+        
+        $scope.isAppointmentModalOpen = true;
+    };
+
+    $scope.closeAppointmentModal = function() {
+        $scope.isAppointmentModalOpen = false;
+    };
+
+    $scope.searchDoctors = function () {
+        if (!$scope.doctorTypeahead.term) { 
+            $scope.doctorTypeahead.isOpen = false; 
+            $scope.newAppointmentForm.doctor_id = null;
+            return; 
+        }
+        $scope.doctorTypeahead.loading = true;
+        
+        AppointmentsService.searchUsers($scope.doctorTypeahead.term)
+            .then(function (res) {
+                $scope.doctorTypeahead.results = res.items || res.data || res;
+                $scope.doctorTypeahead.isOpen = true;
+            })
+            .finally(function () { $scope.doctorTypeahead.loading = false; });
+    };
+
+    $scope.selectDoctor = function (doctor) {
+        $scope.newAppointmentForm.doctor_id = doctor.id;
+        $scope.doctorTypeahead.term = doctor.name;
+        $scope.doctorTypeahead.isOpen = false;
+    };
+
+    $scope.saveNewAppointment = function () {
+        if (!$scope.newAppointmentForm.doctor_id || !$scope.newAppointmentForm.date || !$scope.newAppointmentForm.time) {
+            ToastService.warning("Preencha médico, data e hora (*)."); 
+            return;
+        }
+
+        $scope.isSavingAppointment = true;
+        
+        var finalDate = new Date($scope.newAppointmentForm.date);
+        var timeVal = $scope.newAppointmentForm.time;
+
+        if (angular.isString(timeVal)) {
+            var parts = timeVal.split(":");
+            finalDate.setHours(parseInt(parts[0], 10) || 0, parseInt(parts[1], 10) || 0, 0, 0);
+        } else {
+            var timeObj = new Date(timeVal);
+            finalDate.setHours(timeObj.getHours(), timeObj.getMinutes(), 0, 0);
+        }
+
+        var payload = {
+            patient_id: $scope.patient.id,
+            doctor_id: $scope.newAppointmentForm.doctor_id,
+            appointment_date: finalDate.toISOString(),
+            notes: $scope.newAppointmentForm.notes || "",
+            status: "SCHEDULED"
+        };
+
+        AppointmentsService.createAppointment(payload)
+            .then(function () {
+                ToastService.success("Consulta agendada com sucesso!");
+                $scope.closeAppointmentModal();
+                
+                loadPatientEcosystem($scope.patient.id);
+            })
+            .catch(function (err) {
+                var msg = err.message || err.error || "Erro ao agendar consulta.";
+                if (angular.isArray(msg)) msg = msg.join("<br>");
+                ToastService.error(msg, "Falha");
+            })
+            .finally(function () { $scope.isSavingAppointment = false; });
+    };
+
     $scope.isOverdue = function (invoice) {
       return (
         invoice.status === "PENDING" && new Date(invoice.due_date) < new Date()
