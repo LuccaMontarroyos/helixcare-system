@@ -45,6 +45,21 @@ export class User extends Model<User> {
   @BelongsTo(() => Role)
   declare role: Role;
 
+  @Column({ type: DataType.STRING(50), allowNull: true })
+  declare document: string;
+
+  @Column({ type: DataType.STRING(20), allowNull: true })
+  declare phone: string;
+
+  @Column({ type: DataType.STRING(255), allowNull: true })
+  declare specialty: string;
+
+  @Column({ type: DataType.STRING(500), allowNull: true })
+  declare avatar_url: string;
+
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
+  declare is_active: boolean;
+
   @CreatedAt
   declare created_at: Date;
 
