@@ -54,17 +54,26 @@
 </head>
 
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100"
-    ng-controller="MainController as main" ng-gloak>
+    ng-controller="MainController as main" ng-cloak>
 
     <hc-toast></hc-toast>
 
-    <div ng-if="main.showSplash()" class="fixed inset-0 z-[99999] bg-white dark:bg-[#0b1114] flex flex-col items-center justify-center transition-opacity duration-300">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-6 animate-pulse shadow-inner">
-            <span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1">medical_services</span>
+    <div ng-if="main.showSplash()"
+        class="fixed inset-0 z-[99999] bg-white dark:bg-[#0b1114] flex flex-col items-center justify-center transition-opacity duration-300">
+        <div
+            class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-6 animate-pulse shadow-inner">
+            <span class="material-symbols-outlined text-primary text-4xl"
+                style="font-variation-settings: 'FILL' 1">medical_services</span>
         </div>
         <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">Helixcare</h2>
         <div class="flex items-center gap-2 text-slate-500">
-            <svg class="animate-spin h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path></svg>
+            <svg class="animate-spin h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    fill="currentColor"></path>
+            </svg>
             <span class="text-sm font-medium">Sincronizando sessão...</span>
         </div>
     </div>
@@ -99,8 +108,8 @@
                     <span class="material-symbols-outlined">calendar_today</span>
                     <span>Agenda</span>
                 </a>
-                <a ui-sref="medical-records-hub"
-                    ng-class="main.isStateActive('medical-records-hub') || main.isStateActive('patient-medical-records') ? 'bg-primary/10 text-primary border-r-4 border-primary font-bold' : 'text-slate-600 dark:text-slate-400 border-r-4 border-transparent hover:bg-primary/5 hover:text-primary font-medium'"
+                <a ui-sref="medical-records-hub" hc-has-role="['ADMIN', 'DOCTOR', 'NURSE']"
+                    ng-class="main.isStateActive ('medical-records-hub') || main.isStateActive('patient-medical-records') ? 'bg-primary/10 text-primary border-r-4 border-primary font-bold' : 'text-slate-600 dark:text-slate-400 border-r-4 border-transparent hover:bg-primary/5 hover:text-primary font-medium'"
                     class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all cursor-pointer" title="Em breve">
                     <span class="material-symbols-outlined">assignment</span>
                     <span>Prontuários</span>
@@ -120,9 +129,10 @@
             </nav>
 
             <div class="p-4 border-t border-slate-100 dark:border-slate-800">
-                <a href="#"
-                    class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary transition-colors font-medium">
-                    <span class="material-symbols-outlined">settings</span>
+                <a ui-sref="settings"
+                    ng-class="main.isStateActive('settings') ? 'bg-primary/10 text-primary font-bold' : 'text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:text-primary font-medium'"
+                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer"> <span
+                        class="material-symbols-outlined">settings</span>
                     <span>Configurações</span>
                 </a>
             </div>
@@ -157,7 +167,8 @@
                     </div>
 
                     <div ng-show="main.search.isOpen"
-                        class="absolute top-[110%] left-0 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-[9999] max-h-[70vh] overflow-y-auto" ng-cloak>
+                        class="absolute top-[110%] left-0 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-[9999] max-h-[70vh] overflow-y-auto"
+                        ng-cloak>
                         <div class="p-2" ng-if="main.search.results">
 
                             <div ng-if="main.search.isEmpty" class="p-6 text-center">
@@ -272,7 +283,7 @@
     <script src="shared/components/hc-has-role.directive.js"></script>
 
     <script src="shared/controllers/main.controller.js"></script>
-    <script src="shared/services/search.service.js" ></script>
+    <script src="shared/services/search.service.js"></script>
 
     <script src="modules/auth/auth.module.js"></script>
     <script src="modules/auth/auth.service.js"></script>
@@ -303,6 +314,10 @@
     <script src="modules/analytics/analytics.module.js"></script>
     <script src="modules/analytics/controllers/dashboard.controller.js"></script>
     <script src="modules/analytics/analytics.service.js"></script>
+
+    <script src="modules/settings/settings.module.js"></script>
+    <script src="modules/settings/controllers/settings.controller.js"></script>
+    <script src="modules/settings/settings.service.js"></script>
 </body>
 
 </html>

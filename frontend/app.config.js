@@ -169,6 +169,15 @@ angular
             requireAuth: true,
             allowedRoles: ["ADMIN", "DOCTOR", "NURSE"],
           },
+        })
+        .state("settings", {
+          url: "/settings",
+          templateUrl: "modules/settings/views/settings.html",
+          controller: "SettingsController",
+          data: {
+            requireAuth: true,
+            allowedRoles: []
+          }
         });
     },
   ]);
