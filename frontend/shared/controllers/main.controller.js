@@ -1,13 +1,33 @@
 angular.module('helixcare')
 .controller('MainController', [
-    '$scope', 
+    '$scope',
+    '$rootScope',
     '$state', 
     'AuthService', 
     'GlobalSearchService', 
-    function($scope, $state, AuthService, GlobalSearchService) {
+    function($scope, $rootScope, $state, AuthService, GlobalSearchService) {
         var vm = this;
 
+        $rootScope.isAppReady = false;
+
+        vm.showSplash = function() {
+            return AuthService.isAuthenticated() && !$rootScope.isAppReady && $state.current.name !== 'login';
+        };
+
+        vm.showLayout = function() {
+            if (!$state.current || !$state.current.name || $state.current.name === 'login') return false;
+            return AuthService.isAuthenticated();
+        };
+
         vm.isLoggedIn = function() { return AuthService.isAuthenticated(); };
+
+        vm.showLayout = function() {
+            if (!$state.current || !$state.current.name) return false;
+            
+            if ($state.current.name === 'login') return false;
+            
+            return AuthService.isAuthenticated();
+        };
         
         vm.currentUser = function() { 
             return AuthService.getCurrentUser(); 

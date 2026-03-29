@@ -43,13 +43,23 @@ angular
           }
           return config;
         },
+        response: function (response) {
+          var $rootScope = $injector.get("$rootScope");
+          if (!$rootScope.isAppReady) {
+              $rootScope.isAppReady = true;
+          }
+          return response;
+      },
 
         responseError: function (rejection) {
           if (rejection.status === 401) {
             $window.localStorage.removeItem("hc_token");
             $window.localStorage.removeItem("hc_user");
 
+            var $rootScope = $injector.get("$rootScope");
             var $state = $injector.get("$state");
+
+            $rootScope.isAppReady = true;
             $state.go("login");
           }
           return $q.reject(rejection);
