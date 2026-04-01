@@ -17,4 +17,19 @@ angular.module('helixcare.settings')
             .catch(function(err) { deferred.reject(err.data || err); });
         return deferred.promise;
     };
+
+    this.uploadAvatar = function(userId, file) {
+        var deferred = $q.defer();
+        var formData = new FormData();
+        formData.append('file', file);
+
+        $http.post(API_URL + '/' + userId + '/avatar', formData, {
+            transformRequest: angular.identity,
+            headers: { 'Content-Type': undefined }
+        })
+        .then(function(res) { deferred.resolve(res.data); })
+        .catch(function(err) { deferred.reject(err.data || err); });
+
+        return deferred.promise;
+    };
 }]);

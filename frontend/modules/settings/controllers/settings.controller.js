@@ -39,6 +39,9 @@ angular.module('helixcare.settings')
             
             var payload = {
                 name: $scope.profileData.name,
+                phone: $scope.profileData.phone,
+                specialty: $scope.profileData.specialty,
+
             };
 
             SettingsService.updateProfile($scope.currentUser.id, payload)
@@ -68,6 +71,37 @@ angular.module('helixcare.settings')
                 'LAB_TECHNICIAN': 'Técnico de Laboratório'
             };
             return roles[role] || 'Staff';
+        };
+
+        $scope.isUploadingAvatar = false;
+
+        $scope.uploadAvatar = function(element) {
+            if (!element.files || element.files.length === 0) return;
+            
+            var file = element.files[0];
+            $scope.isUploadingAvatar = true;
+            $scope.$apply();
+
+            SettingsService.uploadAvatar($scope.currentUser.id, file)
+                .then(function(updatedUser) {
+                    ToastService.success("Foto de perfil atualizada com sucesso!");
+                    
+                    var newAvatarUrl = updatedUser.avatar_url || updatedUser.data.avatar_url;
+                    $scope.profileData.avatar_url = newAvatarUrl;
+                    
+                    var localUser = AuthService.getCurrentUser();
+                    localUser.avatar_url = newAvatarUrl;
+                    window.localStorage.setItem('hc_user', angular.toJson(localUser));
+                })
+                .catch(function(err) {
+                    var msg = err.message || err.error || "Falha ao enviar a imagem.";
+                    ToastService.error(msg);
+                })
+                .finally(function() {
+                    $scope.isUploadingAvatar = false;
+                    element.value = '';
+                    $scope.$apply();
+                });
         };
 
         $scope.init();
