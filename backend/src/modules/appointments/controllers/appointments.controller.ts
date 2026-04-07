@@ -10,6 +10,7 @@ import { RolesGuard } from '../../../core/guards/roles.guard';
 import { Roles } from '../../../core/decorators/roles.decorator';
 import { RoleEnum } from '../../roles/enums/roles.enum';
 import { YupValidationPipe } from '../../../core/pipes/yup-validation.pipe';
+import { CurrentUser } from 'src/core/decorators/current-user.decorator';
 
 @ApiTags('Appointments (Agenda)')
 @ApiBearerAuth('JWT-auth')
@@ -22,10 +23,10 @@ export class AppointmentsController {
   @ApiOperation({ summary: 'Cria um novo agendamento de consulta' })
   @ApiResponse({ status: 201, description: 'Agendamento criado com sucesso.' })
   @ApiResponse({ status: 409, description: 'Conflito de horário (Double Booking).' })
-  @Roles(RoleEnum.ADMIN, RoleEnum.RECEPTIONIST)
+  @Roles(RoleEnum.ADMIN, RoleEnum.RECEPTIONIST, RoleEnum.DOCTOR)
   @UsePipes()
-  async create(@Body(new YupValidationPipe(createAppointmentSchema)) createAppointmentDto: CreateAppointmentDto) {
-    return await this.appointmentsService.create(createAppointmentDto);
+  async create(@Body(new YupValidationPipe(createAppointmentSchema)) createAppointmentDto: CreateAppointmentDto, @CurrentUser() currentUser: {id: string; role: RoleEnum}) {
+    return await this.appointmentsService.create(createAppointmentDto, currentUser);
   }
 
   @Get()
