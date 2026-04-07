@@ -15,7 +15,7 @@ angular.module("helixcare.patients").controller("PatientListController", [
 
     $scope.isFetchingCep = false;
     $scope.brazilianStates = BRAZILIAN_STATES;
-    
+
     $scope.init = function () {
       $scope.loadPatients();
     };
@@ -72,27 +72,27 @@ angular.module("helixcare.patients").controller("PatientListController", [
       return [year, month, day].join("-");
     }
 
-    $scope.searchCep = function() {
+    $scope.searchCep = function () {
       var cep = $scope.patientForm.zip_code;
       if (!cep) return;
-      
-      var cleanCep = cep.replace(/\D/g, '');
-      
+
+      var cleanCep = cep.replace(/\D/g, "");
+
       if (cleanCep.length === 8) {
         $scope.isFetchingCep = true;
-        
+
         PatientsService.fetchCep(cleanCep)
-          .then(function(addressData) {
+          .then(function (addressData) {
             $scope.patientForm.street = addressData.logradouro;
             $scope.patientForm.city = addressData.localidade;
             $scope.patientForm.state = addressData.uf;
-            
-            document.getElementById('addressNumber').focus();
+
+            document.getElementById("addressNumber").focus();
           })
-          .catch(function(err) {
+          .catch(function (err) {
             ToastService.warning(err);
           })
-          .finally(function() {
+          .finally(function () {
             $scope.isFetchingCep = false;
           });
       }
@@ -181,8 +181,11 @@ angular.module("helixcare.patients").controller("PatientListController", [
         });
     };
 
-    $scope.goToPatient = function(patient) {
-        $state.go('patient-detail', { id: patient.id });
+    $scope.goToPatient = function (patient, $event) {
+      if ($event) {
+        $event.stopPropagation();
+      }
+      $state.go("patient-detail", { id: patient.id });
     };
 
     $scope.init();

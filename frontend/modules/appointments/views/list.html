@@ -5,7 +5,7 @@
         </p>
     </div>
 
-    <button hc-has-role="['ADMIN', 'RECEPTIONIST']" ng-click="openModal()"
+    <button hc-has-role="['ADMIN', 'RECEPTIONIST', 'DOCTOR']" ng-click="openModal()"
         class="bg-primary text-white text-sm font-bold py-2 px-5 rounded-lg flex items-center gap-2 shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
         <span class="material-symbols-outlined text-base font-bold">add</span>
         Novo Agendamento
@@ -180,7 +180,7 @@
                 Confirmar
             </button>
             <button ng-if="appt.status === 'CONFIRMED'" hc-has-role="['DOCTOR', 'ADMIN']"
-            ui-sref="patient-medical-records({patientId: appt.patient.id, appointmentId: appt.id})"
+                ui-sref="patient-medical-records({patientId: appt.patient.id, appointmentId: appt.id})"
                 class="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors shadow-sm">
                 <span class="material-symbols-outlined text-sm">play_arrow</span> Iniciar Consulta
             </button>
@@ -267,7 +267,18 @@
                 <div class="relative flex flex-col gap-1.5">
                     <label class="text-sm font-bold text-slate-700 dark:text-slate-300">Médico Responsável <span
                             class="text-red-500">*</span></label>
-                    <input type="text"
+                    <div ng-if="modalTypeahead.doctor.isSelfLocked"
+                        class="w-full rounded-lg border border-primary/30 bg-primary/5 dark:bg-primary/10 text-sm p-2.5 flex items-center justify-between text-slate-900 dark:text-white">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-[18px]">stethoscope</span>
+                            <span class="font-semibold">{{ modalTypeahead.doctor.term }}</span>
+                        </div>
+                        <span
+                            class="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[12px]">lock</span> Você
+                        </span>
+                    </div>
+                    <input ng-if="!modalTypeahead.doctor.isSelfLocked" type="text"
                         class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm p-2.5 transition-all text-slate-900 dark:text-white"
                         placeholder="Busque por Nome ou E-mail..." ng-model="modalTypeahead.doctor.term"
                         ng-change="searchModalDoctors()" ng-model-options="{ debounce: 300 }" autocomplete="off">

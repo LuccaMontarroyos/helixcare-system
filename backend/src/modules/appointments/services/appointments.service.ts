@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { CreationAttributes, Op } from 'sequelize';
@@ -11,6 +11,11 @@ import { PatientsService } from '../../patients/services/patients.service';
 import { UsersService } from '../../users/services/users.service';
 import { RoleEnum } from '../../roles/enums/roles.enum';
 
+interface AuthenticatedUser {
+  id: string;
+  role: RoleEnum;
+}
+
 @Injectable()
 export class AppointmentsService {
   constructor(
@@ -19,7 +24,7 @@ export class AppointmentsService {
     private sequelize: Sequelize,
     private patientsService: PatientsService,
     private usersService: UsersService,
-  ) {}
+  ) { }
 
   private async checkDoubleBooking(doctorId: string, date: Date, excludeAppointmentId?: string): Promise<void> {
     const whereClause: any = {
@@ -39,7 +44,17 @@ export class AppointmentsService {
     }
   }
 
-  async create(dto: CreateAppointmentDto): Promise<Appointment> {
+  async create(dto: CreateAppointmentDto, currentUser: AuthenticatedUser): Promise<Appointment> {
+
+    if (currentUser.role === RoleEnum.DOCTOR) {
+      if (dto.doctor_id && dto.doctor_id !== currentUser.id) {
+        throw new ForbiddenException(
+          'Médicos só podem criar agendamentos para si mesmos.',
+        );
+      }
+      dto.doctor_id = currentUser.id;
+    }
+    
     await this.patientsService.findOne(dto.patient_id);
 
     const doctor = await this.usersService.findOne(dto.doctor_id);
@@ -72,9 +87,9 @@ export class AppointmentsService {
     if (filters.status) whereClause.status = filters.status;
     if (filters.date) {
       const [year, month, day] = filters.date.split('-').map(Number);
-      const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);      
+      const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
       const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
-      
+
       whereClause.appointment_date = { [Op.between]: [startOfDay, endOfDay] };
     }
 
@@ -102,7 +117,7 @@ export class AppointmentsService {
 
     const newDoctorId = dto.doctor_id || appointment.doctor_id;
     const newDate = dto.appointment_date || appointment.appointment_date;
-    
+
     if (dto.appointment_date || dto.doctor_id) {
       await this.checkDoubleBooking(newDoctorId, newDate, id);
     }
@@ -123,7 +138,7 @@ export class AppointmentsService {
 
   async remove(id: string): Promise<void> {
     const appointment = await this.findOne(id);
-    
+
     if (appointment.status === AppointmentStatusEnum.COMPLETED) {
       throw new BadRequestException('Consultas já realizadas não podem ser removidas do histórico.');
     }
