@@ -13,109 +13,186 @@
 </div>
 
 <section
-    class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mb-8 animate-fade-in">
-    <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-2 text-slate-900 dark:text-white font-bold">
-            <span class="material-symbols-outlined text-primary">tune</span>
-            <h2>Filtros</h2>
+    class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mb-8 animate-fade-in overflow-hidden">
+
+    <div class="px-6 pt-5 pb-4 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-primary">calendar_month</span>
+                <span class="font-bold text-slate-900 dark:text-white text-sm">{{ week.label }}</span>
+                <span ng-if="week.isLoadingCounts"
+                    class="text-[10px] font-bold text-slate-400 animate-pulse uppercase tracking-widest">
+                    atualizando...
+                </span>
+            </div>
+
+            <div class="flex items-center gap-2">
+
+                <div
+                    class="relative flex items-center gap-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 hover:border-primary/40 focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/10 transition-all">
+                    <span class="material-symbols-outlined text-slate-400 text-[16px] pointer-events-none shrink-0">
+                        edit_calendar
+                    </span>
+                    <input type="date" ng-model="week.jumpDate" ng-change="jumpToDate()"
+                        title="Ir para uma data específica" class="bg-transparent text-sm text-slate-600 dark:text-slate-300 font-medium focus:outline-none cursor-pointer
+               [&::-webkit-calendar-picker-indicator]:opacity-0
+               [&::-webkit-calendar-picker-indicator]:absolute
+               [&::-webkit-calendar-picker-indicator]:inset-0
+               [&::-webkit-calendar-picker-indicator]:w-full
+               [&::-webkit-calendar-picker-indicator]:cursor-pointer
+               w-[120px]" placeholder="dd/mm/aaaa" />
+                </div>
+
+                <button ng-click="goToCurrentWeek()"
+                    class="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-primary hover:border-primary/30 transition-all">
+                    Hoje
+                </button>
+                <div class="flex">
+                    <button ng-click="prevWeek()"
+                        class="p-1.5 rounded-l-lg border border-r-0 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all">
+                        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                    </button>
+                    <button ng-click="nextWeek()"
+                        class="p-1.5 rounded-r-lg border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all">
+                        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                    </button>
+                </div>
+            </div>
         </div>
-        <button ng-click="clearFilters()" class="text-xs font-bold text-slate-400 hover:text-primary transition-colors">
-            Limpar Filtros
-        </button>
+
+        <div class="grid grid-cols-7 gap-1.5">
+            <button ng-repeat="day in week.days track by day.iso" ng-click="selectDay(day)"
+                class="flex flex-col items-center justify-center gap-0.5 py-3 px-1 rounded-xl border transition-all"
+                ng-class="{
+                    'bg-primary text-white border-primary shadow-md shadow-primary/20 scale-[1.03]': day.isSelected,
+                    'bg-primary/5 border-primary/20': day.isToday && !day.isSelected,
+                    'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800': !day.isSelected && !day.isToday
+                }">
+
+                <span class="text-[10px] font-bold uppercase tracking-widest leading-none" ng-class="{
+                        'text-white/60': day.isSelected,
+                        'text-primary': day.isToday && !day.isSelected,
+                        'text-slate-400': !day.isSelected && !day.isToday
+                    }">
+                    {{ day.label }}
+                </span>
+
+                <span class="text-lg font-black leading-none mt-0.5" ng-class="{
+                        'text-white': day.isSelected,
+                        'text-primary': day.isToday && !day.isSelected,
+                        'text-slate-700 dark:text-slate-200': !day.isSelected && !day.isToday
+                    }">
+                    {{ day.dayNum }}
+                </span>
+
+                <div class="h-4 flex items-center justify-center mt-0.5">
+                    <span ng-if="day.count > 0" class="text-[9px] font-black px-1.5 py-0.5 rounded-full leading-none"
+                        ng-class="day.isSelected ? 'bg-white/25 text-white' : 'bg-primary/10 text-primary'">
+                        {{ day.count }}
+                    </span>
+                </div>
+            </button>
+        </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-        <div class="flex flex-col gap-1.5">
-            <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Data Exata</label>
-            <input type="date" ng-model="filters.date" ng-change="applyFilters()"
-                class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-2.5" />
+    <div class="px-6 py-4">
+        <div class="flex items-center justify-between mb-3">
+            <div
+                class="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 text-[11px] font-bold uppercase tracking-wider">
+                <span class="material-symbols-outlined text-[14px]">tune</span> Filtros adicionais
+            </div>
+            <button ng-click="clearFilters()"
+                class="text-xs font-bold text-slate-400 hover:text-primary transition-colors flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">filter_list_off</span> Limpar Tudo
+            </button>
         </div>
 
-        <div class="flex flex-col gap-1.5">
-            <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Status</label>
-            <select ng-model="filters.status" ng-change="applyFilters()"
-                class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-2.5">
-                <option value="">Todos</option>
-                <option value="SCHEDULED">Agendado</option>
-                <option value="CONFIRMED">Confirmado</option>
-                <option value="COMPLETED">Concluído</option>
-                <option value="CANCELED">Cancelado</option>
-            </select>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+            <div class="flex flex-col gap-1.5">
+                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Status</label>
+                <select ng-model="filters.status" ng-change="applyFilters()"
+                    class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-2.5">
+                    <option value="">Todos</option>
+                    <option value="SCHEDULED">Agendado</option>
+                    <option value="CONFIRMED">Confirmado</option>
+                    <option value="COMPLETED">Concluído</option>
+                    <option value="CANCELED">Cancelado</option>
+                </select>
+            </div>
+
+            <div class="flex flex-col gap-1.5 relative">
+                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Paciente</label>
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">person_search</span>
+                    <input type="text" ng-model="typeahead.patient.term" ng-model-options="{ debounce: 300 }"
+                        ng-change="searchPatients()" ng-blur="typeahead.patient.isOpen = false"
+                        class="w-full pl-9 pr-8 rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-2.5 transition-all"
+                        placeholder="Buscar por nome..." autocomplete="off" />
+                    <span ng-show="typeahead.patient.loading" class="absolute right-3 top-1/2 -translate-y-1/2">
+                        <svg class="animate-spin h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                fill="currentColor"></path>
+                        </svg>
+                    </span>
+                </div>
+                <div ng-show="typeahead.patient.isOpen"
+                    class="absolute top-[100%] left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-[100] max-h-60 overflow-y-auto">
+                    <ul class="py-1">
+                        <li ng-if="typeahead.patient.results.length === 0"
+                            class="px-4 py-3 text-sm text-slate-500 text-center">Nenhum paciente encontrado.</li>
+                        <li ng-repeat="p in typeahead.patient.results" ng-mousedown="selectPatient(p)"
+                            class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 transition-colors">
+                            <div class="font-bold text-sm text-slate-900 dark:text-slate-100">{{ p.name }}</div>
+                            <div class="text-xs text-slate-500">CPF: {{ p.cpf | cpfFilter }}</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-1.5 relative" hc-has-role="['ADMIN', 'RECEPTIONIST']">
+                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Médico (Staff)</label>
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">stethoscope</span>
+                    <input type="text" ng-model="typeahead.doctor.term" ng-model-options="{ debounce: 300 }"
+                        ng-change="searchDoctors()" ng-blur="typeahead.doctor.isOpen = false"
+                        class="w-full pl-9 pr-8 rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-2.5 transition-all"
+                        placeholder="Buscar por médico..." autocomplete="off" />
+                    <span ng-show="typeahead.doctor.loading" class="absolute right-3 top-1/2 -translate-y-1/2">
+                        <svg class="animate-spin h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                fill="currentColor"></path>
+                        </svg>
+                    </span>
+                </div>
+                <div ng-show="typeahead.doctor.isOpen"
+                    class="absolute top-[100%] left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-[100] max-h-60 overflow-y-auto">
+                    <ul class="py-1">
+                        <li ng-if="typeahead.doctor.results.length === 0"
+                            class="px-4 py-3 text-sm text-slate-500 text-center">Nenhum médico encontrado.</li>
+                        <li ng-repeat="doc in typeahead.doctor.results" ng-mousedown="selectDoctor(doc)"
+                            class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 transition-colors">
+                            <div class="font-bold text-sm text-slate-900 dark:text-slate-100">
+                                {{ doc.name }}
+                                <span class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded ml-1">{{
+                                    doc.role }}</span>
+                            </div>
+                            <div class="text-xs text-slate-500">E-mail: {{ doc.email }}</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
         </div>
-
-        <div class="flex flex-col gap-1.5 relative">
-            <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Paciente</label>
-            <div class="relative">
-                <span
-                    class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">person_search</span>
-                <input type="text" ng-model="typeahead.patient.term" ng-model-options="{ debounce: 300 }"
-                    ng-change="searchPatients()" ng-blur="typeahead.patient.isOpen = false"
-                    class="w-full pl-9 pr-8 rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-2.5 transition-all shadow-sm"
-                    placeholder="Buscar por nome..." autocomplete="off" />
-
-                <span ng-show="typeahead.patient.loading" class="absolute right-3 top-1/2 -translate-y-1/2">
-                    <svg class="animate-spin h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                        </circle>
-                        <path class="opacity-75"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            fill="currentColor"></path>
-                    </svg>
-                </span>
-            </div>
-
-            <div ng-show="typeahead.patient.isOpen"
-                class="absolute top-[100%] left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-[100] max-h-60 overflow-y-auto">
-                <ul class="py-1">
-                    <li ng-if="typeahead.patient.results.length === 0"
-                        class="px-4 py-3 text-sm text-slate-500 text-center">Nenhum paciente encontrado.</li>
-                    <li ng-repeat="p in typeahead.patient.results" ng-mousedown="selectPatient(p)"
-                        class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 transition-colors">
-                        <div class="font-bold text-sm text-slate-900 dark:text-slate-100">{{ p.name }}</div>
-                        <div class="text-xs text-slate-500 font-medium">CPF: {{ p.cpf | cpfFilter }}</div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="flex flex-col gap-1.5 relative" hc-has-role="['ADMIN', 'RECEPTIONIST']">
-            <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Médico (Staff)</label>
-            <div class="relative">
-                <span
-                    class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">stethoscope</span>
-                <input type="text" ng-model="typeahead.doctor.term" ng-model-options="{ debounce: 300 }"
-                    ng-change="searchDoctors()" ng-blur="typeahead.doctor.isOpen = false"
-                    class="w-full pl-9 pr-8 rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-2.5 transition-all shadow-sm"
-                    placeholder="Buscar por médico..." autocomplete="off" />
-
-                <span ng-show="typeahead.doctor.loading" class="absolute right-3 top-1/2 -translate-y-1/2">
-                    <svg class="animate-spin h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                        </circle>
-                        <path class="opacity-75"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            fill="currentColor"></path>
-                    </svg>
-                </span>
-            </div>
-
-            <div ng-show="typeahead.doctor.isOpen"
-                class="absolute top-[100%] left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-[100] max-h-60 overflow-y-auto">
-                <ul class="py-1">
-                    <li ng-if="typeahead.doctor.results.length === 0"
-                        class="px-4 py-3 text-sm text-slate-500 text-center">Nenhum médico encontrado.</li>
-                    <li ng-repeat="doc in typeahead.doctor.results" ng-mousedown="selectDoctor(doc)"
-                        class="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 transition-colors">
-                        <div class="font-bold text-sm text-slate-900 dark:text-slate-100">{{ doc.name }} <span
-                                class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded ml-1">{{ doc.role
-                                }}</span></div>
-                        <div class="text-xs text-slate-500 font-medium">E-mail: {{ doc.email }}</div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
     </div>
 </section>
 

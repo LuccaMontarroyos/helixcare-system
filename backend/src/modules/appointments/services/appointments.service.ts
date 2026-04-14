@@ -85,12 +85,14 @@ export class AppointmentsService {
     if (filters.patient_id) whereClause.patient_id = filters.patient_id;
     if (filters.doctor_id) whereClause.doctor_id = filters.doctor_id;
     if (filters.status) whereClause.status = filters.status;
-    if (filters.date) {
-      const [year, month, day] = filters.date.split('-').map(Number);
-      const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
-      const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
 
-      whereClause.appointment_date = { [Op.between]: [startOfDay, endOfDay] };
+    if (filters.start_date && filters.end_date) {
+      whereClause.appointment_date = {
+        [Op.between]: [
+          new Date(filters.start_date),
+          new Date(filters.end_date),
+        ],
+      };
     }
 
     const { rows, count } = await this.appointmentModel.findAndCountAll({
@@ -101,7 +103,43 @@ export class AppointmentsService {
       offset,
     });
 
-    return { data: rows, total: count, current_page: page, total_pages: Math.ceil(count / limit) };
+    return {
+      data: rows,
+      total: count,
+      current_page: page,
+      total_pages: Math.ceil(count / limit),
+    };
+  }
+
+  async findAll_weekCounts(
+    startDate: string,
+    endDate: string,
+    filters: any = {},
+  ): Promise<Record<string, number>> {
+    const whereClause: any = {};
+
+    if (filters.patient_id) whereClause.patient_id = filters.patient_id;
+    if (filters.doctor_id)  whereClause.doctor_id  = filters.doctor_id;
+    if (filters.status)     whereClause.status      = filters.status;
+    
+    whereClause.appointment_date = {
+      [Op.between]: [new Date(startDate), new Date(endDate)],
+    };
+
+    const appointments = await this.appointmentModel.findAll({
+      where: whereClause,
+      attributes: ['appointment_date'],
+    });
+
+    return appointments.reduce(
+      (acc, appt) => {
+        const d   = new Date(appt.appointment_date);
+        const key = d.toISOString().split('T')[0];
+        acc[key]  = (acc[key] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
   }
 
   async findOne(id: string): Promise<Appointment> {

@@ -10,6 +10,15 @@ angular.module('helixcare.appointments')
         return deferred.promise;
     };
 
+    this.getWeekCounts = function(startDate, endDate, extraFilters) {
+        var deferred = $q.defer();
+        var params = angular.extend({ start_date: startDate, end_date: endDate }, extraFilters || {});
+        $http.get(API_URL + '/week-counts', { params: params })
+            .then(function(res) { deferred.resolve(res.data); })
+            .catch(function(err) { deferred.reject(err.data || err); });
+        return deferred.promise;
+    };
+
     this.getAppointmentById = function(id) {
         var deferred = $q.defer();
         $http.get(API_URL + '/' + id)
