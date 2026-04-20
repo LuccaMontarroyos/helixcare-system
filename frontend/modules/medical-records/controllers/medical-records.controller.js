@@ -21,7 +21,6 @@ angular
       AuthService,
       ToastService,
     ) {
-
       $scope.currentUser = AuthService.getCurrentUser();
       $scope.patient = null;
       $scope.history = [];
@@ -94,7 +93,11 @@ angular
           anamnesis: record.anamnesis || record.notes,
           diagnosis: record.diagnosis,
           prescription: record.prescription,
-          social_history: record.social_history || { is_smoker: false, consumes_alcohol: false, notes: "" },
+          social_history: record.social_history || {
+            is_smoker: false,
+            consumes_alcohol: false,
+            notes: "",
+          },
           attachments: record.attachments || [],
           isLockedByOther: false,
           lockedBy: null,
@@ -105,10 +108,17 @@ angular
             var isLocked = status.isLocked;
             var lockedBy = status.lockedBy;
 
-            if (isLocked && lockedBy !== $scope.currentUser.id && lockedBy !== $scope.currentUser.name) {
+            if (
+              isLocked &&
+              lockedBy !== $scope.currentUser.id &&
+              lockedBy !== $scope.currentUser.name
+            ) {
               $scope.editor.isLockedByOther = true;
               $scope.editor.lockedBy = lockedBy || "Outro profissional";
-              ToastService.warning("Atenção: Este prontuário está sendo editado por " + $scope.editor.lockedBy);
+              ToastService.warning(
+                "Atenção: Este prontuário está sendo editado por " +
+                  $scope.editor.lockedBy,
+              );
             } else {
               MedicalRecordsService.lockRecord(record.id)
                 .then(function () {
@@ -118,7 +128,10 @@ angular
                 .catch(function (err) {
                   $scope.editor.isLockedByOther = true;
                   $scope.editor.lockedBy = err.lockedBy || "Outro profissional";
-                  ToastService.warning("O registro acabou de ser travado por " + $scope.editor.lockedBy);
+                  ToastService.warning(
+                    "O registro acabou de ser travado por " +
+                      $scope.editor.lockedBy,
+                  );
                 });
             }
           })
@@ -128,9 +141,14 @@ angular
       };
 
       $scope.releaseLock = function () {
-
-        if (!$scope.editor.isNew && $scope.editor.id && !$scope.editor.isLockedByOther) {
-          MedicalRecordsService.unlockRecord($scope.editor.id).catch(angular.noop);
+        if (
+          !$scope.editor.isNew &&
+          $scope.editor.id &&
+          !$scope.editor.isLockedByOther
+        ) {
+          MedicalRecordsService.unlockRecord($scope.editor.id).catch(
+            angular.noop,
+          );
         }
       };
 
@@ -197,52 +215,50 @@ angular
           .then(function (res) {
             var isNewEvolution = $scope.editor.isNew;
             var sourceAppointmentId = $stateParams.appointmentId;
-
-            if (isNewEvolution && sourceAppointmentId) {
-              AppointmentsService.getAppointmentById(sourceAppointmentId)
-                .then(function (appt) {
-                  if (appt.status === "CONFIRMED") {
-                    var payload = {
-                      patient_id: appt.patient
-                        ? appt.patient.id
-                        : appt.patient_id || null,
-                      doctor_id: appt.doctor
-                        ? appt.doctor.id
-                        : appt.doctor_id || null,
-                      appointment_date: appt.appointment_date,
-                      notes: appt.notes || "",
-                      status: "COMPLETED",
-                    };
-
-                    return AppointmentsService.updateAppointment(
-                      appt.id,
-                      payload,
-                    );
-                  } else {
-                    console.warn(
-                      "[ALERTA] A consulta não está CONFIRMED. Status atual:",
-                      appt.status,
-                    );
-                    return $q.reject("Status_Invalido");
-                  }
-                })
-                .then(function () {
-                  ToastService.info(
-                    "A consulta na agenda foi marcada como concluída.",
-                  );
-                })
-                .catch(function (err) {
-                  if (err !== "Status_Invalido") {
-                    console.error(
-                      "[ERRO FATAL NA AUTOMAÇÃO] Falha ao atualizar agenda:",
-                      err,
-                    );
-                  }
-                });
-            }
             ToastService.success("Evolução salva com sucesso!");
             $scope.init();
             $scope.startNewEvolution();
+
+            if (!isNewEvolution || !sourceAppointmentId) return res;
+
+            AppointmentsService.getAppointmentById(sourceAppointmentId)
+              .then(function (appt) {
+                var statusesInProgress = [
+                  "WAITING",
+                  "IN_PROGRESS",
+                  "CONFIRMED",
+                ];
+
+                if (statusesInProgress.indexOf(appt.status) === -1) {
+                  console.warn(
+                    "[AGENDA] Consulta não estava em atendimento. Status atual:",
+                    appt.status,
+                    "— nenhuma ação tomada.",
+                  );
+                  return;
+                }
+
+                var payload = {
+                  patient_id: appt.patient ? appt.patient.id : appt.patient_id,
+                  doctor_id: appt.doctor ? appt.doctor.id : appt.doctor_id,
+                  appointment_date: appt.appointment_date,
+                  notes: appt.notes || "",
+                  status: "COMPLETED",
+                };
+
+                return AppointmentsService.updateAppointment(
+                  sourceAppointmentId,
+                  payload,
+                );
+              })
+              .then(function () {
+                ToastService.info("Consulta marcada como concluída na agenda.");
+              })
+              .catch(function (err) {
+                console.error("[AGENDA] Falha ao concluir consulta:", err);
+              });
+
+            return res;
           })
           .catch(function (err) {
             var msg =

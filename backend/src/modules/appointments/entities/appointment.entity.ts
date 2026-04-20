@@ -1,4 +1,4 @@
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo, CreatedAt, UpdatedAt, DeletedAt } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo, CreatedAt, UpdatedAt, DeletedAt, AllowNull } from 'sequelize-typescript';
 import { Patient } from '../../patients/entities/patient.entity';
 import { User } from '../../users/entities/user.entity';
 import { AppointmentStatusEnum } from '../enums/appointment-status.enum';
@@ -43,6 +43,10 @@ export class Appointment extends Model<Appointment> {
 
   @Column({ type: DataType.TEXT, allowNull: true })
   declare notes: string;
+
+  @Column({ type: DataType.UUID,
+  allowNull: true })
+  declare rescheduled_from_id: string;
 
   @CreatedAt
   declare created_at: Date;

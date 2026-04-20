@@ -11,10 +11,9 @@ import { PatientsService } from '../../patients/services/patients.service';
 import { UsersService } from '../../users/services/users.service';
 import { RoleEnum } from '../../roles/enums/roles.enum';
 
-interface AuthenticatedUser {
-  id: string;
-  role: RoleEnum;
-}
+import { ICurrentUser } from 'src/modules/auth/interfaces/current-user.interface';
+import { validateStatusTransition, NON_REMOVABLE_STATUSES } from '../utils/appointments-status.validator';
+
 
 @Injectable()
 export class AppointmentsService {
@@ -27,10 +26,17 @@ export class AppointmentsService {
   ) { }
 
   private async checkDoubleBooking(doctorId: string, date: Date, excludeAppointmentId?: string): Promise<void> {
+    const activeStatuses = [
+      AppointmentStatusEnum.SCHEDULED,
+      AppointmentStatusEnum.CONFIRMED,
+      AppointmentStatusEnum.WAITING,
+      AppointmentStatusEnum.IN_PROGRESS,
+    ];
+
     const whereClause: any = {
       doctor_id: doctorId,
       appointment_date: date,
-      status: { [Op.in]: [AppointmentStatusEnum.SCHEDULED, AppointmentStatusEnum.CONFIRMED] },
+      status: { [Op.in]: activeStatuses },
     };
 
     if (excludeAppointmentId) {
@@ -44,20 +50,17 @@ export class AppointmentsService {
     }
   }
 
-  async create(dto: CreateAppointmentDto, currentUser: AuthenticatedUser): Promise<Appointment> {
-
-    if (currentUser.role === RoleEnum.DOCTOR) {
-      if (dto.doctor_id && dto.doctor_id !== currentUser.id) {
-        throw new ForbiddenException(
-          'Médicos só podem criar agendamentos para si mesmos.',
-        );
-      }
-      dto.doctor_id = currentUser.id;
+  async create(dto: CreateAppointmentDto, currentUser: ICurrentUser): Promise<Appointment> {
+    if (currentUser.role === RoleEnum.DOCTOR && dto.doctor_id !== currentUser.id) {
+      throw new ForbiddenException('Médicos só podem criar agendamentos para si mesmos.');
     }
-    
+
+    const doctorId = currentUser.role === RoleEnum.DOCTOR ? currentUser.id : dto.doctor_id;
+
     await this.patientsService.findOne(dto.patient_id);
 
     const doctor = await this.usersService.findOne(dto.doctor_id);
+
     if (doctor.role.name !== RoleEnum.DOCTOR) {
       throw new BadRequestException('O usuário selecionado não possui o cargo de Médico.');
     }
@@ -65,9 +68,13 @@ export class AppointmentsService {
     await this.checkDoubleBooking(dto.doctor_id, dto.appointment_date);
 
     const transaction = await this.sequelize.transaction();
+
     try {
-      const appointment = await this.appointmentModel.create(
-        dto as CreationAttributes<Appointment>,
+      const appointment = await this.appointmentModel.create({
+        ...dto,
+        doctor_id: doctorId,
+        status: AppointmentStatusEnum.SCHEDULED,
+      } as CreationAttributes<Appointment>,
         { transaction }
       );
       await transaction.commit();
@@ -119,9 +126,9 @@ export class AppointmentsService {
     const whereClause: any = {};
 
     if (filters.patient_id) whereClause.patient_id = filters.patient_id;
-    if (filters.doctor_id)  whereClause.doctor_id  = filters.doctor_id;
-    if (filters.status)     whereClause.status      = filters.status;
-    
+    if (filters.doctor_id) whereClause.doctor_id = filters.doctor_id;
+    if (filters.status) whereClause.status = filters.status;
+
     whereClause.appointment_date = {
       [Op.between]: [new Date(startDate), new Date(endDate)],
     };
@@ -133,9 +140,9 @@ export class AppointmentsService {
 
     return appointments.reduce(
       (acc, appt) => {
-        const d   = new Date(appt.appointment_date);
+        const d = new Date(appt.appointment_date);
         const key = d.toISOString().split('T')[0];
-        acc[key]  = (acc[key] || 0) + 1;
+        acc[key] = (acc[key] || 0) + 1;
         return acc;
       },
       {} as Record<string, number>,
@@ -152,6 +159,10 @@ export class AppointmentsService {
 
   async update(id: string, dto: UpdateAppointmentDto): Promise<Appointment> {
     const appointment = await this.findOne(id);
+
+    if (dto.status && dto.status !== appointment.status) {
+      validateStatusTransition(appointment.status as AppointmentStatusEnum, dto.status as AppointmentStatusEnum);
+    }
 
     const newDoctorId = dto.doctor_id || appointment.doctor_id;
     const newDate = dto.appointment_date || appointment.appointment_date;
@@ -174,11 +185,71 @@ export class AppointmentsService {
     }
   }
 
+  async reschedule(
+    id: string,
+    newDate: Date,
+  ): Promise<Appointment> {
+    const original = await this.findOne(id);
+
+    validateStatusTransition(
+      original.status as AppointmentStatusEnum,
+      AppointmentStatusEnum.RESCHEDULED,
+    );
+
+    await this.checkDoubleBooking(original.doctor_id, newDate, id);
+
+    const transaction = await this.sequelize.transaction();
+    try {
+
+      await original.update(
+        { status: AppointmentStatusEnum.RESCHEDULED },
+        { transaction },
+      );
+
+      const newAppointment = await this.appointmentModel.create({
+        patient_id: original.patient_id,
+        doctor_id: original.doctor_id,
+        appointment_date: newDate,
+        notes: original.notes,
+        status: AppointmentStatusEnum.SCHEDULED,
+        rescheduled_from_id: original.id,
+      } as CreationAttributes<Appointment>,
+        { transaction },
+      );
+
+      await transaction.commit();
+      return newAppointment;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  async processNoShows(gracePeriodMinutes: number = 30): Promise<number> {
+    const cutoff = new Date(Date.now() - gracePeriodMinutes * 60 * 1000);
+
+    const [affectedRows] = await this.appointmentModel.update(
+      { status: AppointmentStatusEnum.NO_SHOW },
+      {
+        where: {
+          status: {
+            [Op.in]: [
+              AppointmentStatusEnum.SCHEDULED,
+              AppointmentStatusEnum.CONFIRMED,
+            ],
+          },
+          appointment_date: { [Op.lt]: cutoff },
+        },
+      },
+    );
+    return affectedRows;
+  }
+
   async remove(id: string): Promise<void> {
     const appointment = await this.findOne(id);
 
-    if (appointment.status === AppointmentStatusEnum.COMPLETED) {
-      throw new BadRequestException('Consultas já realizadas não podem ser removidas do histórico.');
+    if (NON_REMOVABLE_STATUSES.includes(appointment.status as AppointmentStatusEnum)) {
+      throw new BadRequestException(`Consultas com status "${appointment.status}" não podem ser removidas do histórico.`);
     }
 
     await appointment.destroy();

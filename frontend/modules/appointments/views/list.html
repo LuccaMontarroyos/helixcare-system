@@ -115,10 +115,18 @@
                 <select ng-model="filters.status" ng-change="applyFilters()"
                     class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-2.5">
                     <option value="">Todos</option>
-                    <option value="SCHEDULED">Agendado</option>
-                    <option value="CONFIRMED">Confirmado</option>
-                    <option value="COMPLETED">Concluído</option>
-                    <option value="CANCELED">Cancelado</option>
+                    <optgroup label="Ativos">
+                        <option value="SCHEDULED">Agendado</option>
+                        <option value="CONFIRMED">Confirmado</option>
+                        <option value="WAITING">Aguardando</option>
+                        <option value="IN_PROGRESS">Em Atendimento</option>
+                    </optgroup>
+                    <optgroup label="Encerrados">
+                        <option value="COMPLETED">Concluído</option>
+                        <option value="NO_SHOW">Faltou</option>
+                        <option value="RESCHEDULED">Remarcado</option>
+                        <option value="CANCELED">Cancelado</option>
+                    </optgroup>
                 </select>
             </div>
 
@@ -217,7 +225,7 @@
 <div class="space-y-4 animate-fade-in" ng-if="!isLoading && appointments.length > 0">
     <div ng-repeat="appt in appointments"
         class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center gap-6"
-        ng-class="{'opacity-60 grayscale-[0.3]': appt.status === 'CANCELED' || appt.status === 'COMPLETED'}">
+        ng-class="{'opacity-55 grayscale-[0.4]': isTerminalStatus(appt.status)}">
 
         <div class="flex items-center gap-4 flex-1">
             <div class="size-14 rounded-full overflow-hidden ring-2 shrink-0 flex items-center justify-center font-bold text-xl"
@@ -252,27 +260,54 @@
             class="flex items-center gap-2 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-700 pt-4 md:pt-0 md:pl-6">
 
             <button ng-if="appt.status === 'SCHEDULED'" hc-has-role="['RECEPTIONIST', 'ADMIN']"
-                ng-click="changeStatus(appt, 'CONFIRMED')"
-                class="flex items-center gap-2 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors">
-                Confirmar
+                ng-click="confirmAppointment(appt)"
+                class="flex items-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-200 px-3 py-2 rounded-lg text-sm font-bold hover:bg-sky-100 transition-colors">
+                <span class="material-symbols-outlined text-sm">check_circle</span> Confirmar
             </button>
-            <button ng-if="appt.status === 'CONFIRMED'" hc-has-role="['DOCTOR', 'ADMIN']"
+
+            <ng-container ng-if="appt.status === 'CONFIRMED'">
+                <button hc-has-role="['RECEPTIONIST', 'ADMIN']" ng-click="markAsWaiting(appt)"
+                    class="flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-200 px-3 py-2 rounded-lg text-sm font-bold hover:bg-green-100 transition-colors mb-1">
+                    <span class="material-symbols-outlined text-sm">chair</span> Chegou
+                </button>
+                <button hc-has-role="['RECEPTIONIST', 'ADMIN']" ng-click="markAsNoShow(appt)"
+                    class="flex items-center gap-1.5 bg-rose-50 text-rose-700 border border-rose-200 px-3 py-2 pr-6 rounded-lg text-sm font-bold hover:bg-rose-100 transition-colors">
+                    <span class="material-symbols-outlined text-sm">person_off</span> Faltou
+                </button>
+            </ng-container>
+
+            <button ng-if="appt.status === 'WAITING'" hc-has-role="['DOCTOR', 'ADMIN']"
                 ui-sref="patient-medical-records({patientId: appt.patient.id, appointmentId: appt.id})"
                 class="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors shadow-sm">
                 <span class="material-symbols-outlined text-sm">play_arrow</span> Iniciar Consulta
             </button>
 
-            <button hc-has-role="['ADMIN', 'RECEPTIONIST']" ng-click="openModal(appt)"
+            <span ng-if="appt.status === 'IN_PROGRESS'"
+                class="flex items-center gap-1.5 text-violet-600 text-xs font-bold">
+                <span class="material-symbols-outlined text-sm animate-pulse">stethoscope</span> Em andamento
+            </span>
+
+            <button ng-if="appt.status === 'SCHEDULED' || appt.status === 'CONFIRMED'"
+                hc-has-role="['ADMIN', 'RECEPTIONIST']" ng-click="openRescheduleModal(appt)"
+                class="p-2 text-slate-400 hover:text-amber-500 transition-colors rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                title="Remarcar Consulta">
+                <span class="material-symbols-outlined">update</span>
+            </button>
+
+            <button ng-if="!isTerminalStatus(appt.status) && appt.status !== 'IN_PROGRESS' && appt.status !== 'WAITING'"
+                hc-has-role="['ADMIN', 'RECEPTIONIST']" ng-click="openModal(appt)"
                 class="p-2 text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-primary/10"
                 title="Editar Agendamento">
                 <span class="material-symbols-outlined">edit</span>
             </button>
 
-            <button hc-has-role="['ADMIN', 'RECEPTIONIST']" ng-click="deleteAppointment(appt)"
+            <button ng-if="appt.status === 'SCHEDULED' || appt.status === 'CONFIRMED'"
+                hc-has-role="['ADMIN', 'RECEPTIONIST']" ng-click="deleteAppointment(appt)"
                 class="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-                title="Apagar Agendamento">
+                title="Remover Agendamento">
                 <span class="material-symbols-outlined">delete</span>
             </button>
+
         </div>
     </div>
 </div>
