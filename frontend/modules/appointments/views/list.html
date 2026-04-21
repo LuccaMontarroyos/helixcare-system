@@ -233,13 +233,27 @@
                 {{ appt.patient.name.charAt(0) | uppercase }}
             </div>
             <div>
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-none mb-1">{{ appt.patient.name }}
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-none mb-1">
+                    {{ appt.patient.name }}
                 </h3>
+
                 <p class="text-slate-500 text-sm flex items-center gap-1 font-medium">
                     <span class="material-symbols-outlined text-[16px]">{{ getStatusConfig(appt.status).icon }}</span>
                     {{ appt.appointment_date | date:'dd/MM/yyyy HH:mm' }}
+                    <span ng-if="appt.duration_minutes" class="text-slate-400 text-xs">
+                        &bull; {{ formatDuration(appt.duration_minutes) }}
+                    </span>
                 </p>
-                <p class="text-xs text-slate-400 mt-0.5" ng-if="appt.notes">{{ appt.notes }}</p>
+
+                <p ng-if="appt.appointment_type && appt.appointment_type !== 'OUTRO'"
+                    class="text-xs text-primary font-semibold mt-0.5 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[13px]">medical_services</span>
+                    {{ getTypeLabel(appt.appointment_type) }}
+                </p>
+
+                <p class="text-xs text-slate-400 mt-1 italic" ng-if="appt.notes">
+                    {{ appt.notes }}
+                </p>
             </div>
         </div>
 
@@ -421,6 +435,52 @@
                         <input type="time"
                             class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm p-2.5 transition-all text-slate-900 dark:text-white"
                             ng-model="appointmentForm.time">
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-bold text-slate-700 dark:text-slate-300">
+                        Tipo de Consulta / Procedimento
+                    </label>
+                    <select ng-model="appointmentForm.appointment_type" ng-change="onAppointmentTypeChange()"
+                        class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm p-2.5 transition-all text-slate-900 dark:text-white">
+                        <option value="">Selecione o tipo...</option>
+                        <optgroup ng-repeat="group in appointmentTypeGroups" label="{{ group.group }}">
+                            <option ng-repeat="type in group.types" value="{{ type.value }}">
+                                {{ type.label }} ({{ formatDuration(type.duration) }})
+                            </option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="flex flex-col gap-1.5" ng-show="appointmentForm.appointment_type">
+                    <label class="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                        Duração estimada
+                        <span ng-if="!isDurationCustom"
+                            class="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            Automático
+                        </span>
+                        <span ng-if="isDurationCustom"
+                            class="text-[10px] font-bold text-amber-600 bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            Personalizado
+                        </span>
+                    </label>
+
+                    <div ng-if="!isDurationCustom && appointmentForm.duration_minutes"
+                        class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/60 text-sm p-2.5 text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[16px] text-primary">schedule</span>
+                        {{ formatDuration(appointmentForm.duration_minutes) }}
+                    </div>
+
+                    <!-- Editável: tipo OUTRO -->
+                    <div ng-if="isDurationCustom" class="flex items-center gap-3">
+                        <input type="number" ng-model="appointmentForm.duration_minutes" min="5" max="480" step="5"
+                            placeholder="Ex: 45"
+                            class="w-32 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400 text-sm p-2.5 text-slate-900 dark:text-white transition-all">
+                        <span class="text-sm text-slate-500">minutos</span>
+                        <span class="text-xs text-slate-400" ng-if="appointmentForm.duration_minutes">
+                            = {{ formatDuration(appointmentForm.duration_minutes) }}
+                        </span>
                     </div>
                 </div>
 

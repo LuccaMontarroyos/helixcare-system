@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { CreationAttributes, Op } from 'sequelize';
+import { CreationAttributes, Op, literal, where as seqWhere } from 'sequelize';
 import { Appointment } from '../entities/appointment.entity';
 import { CreateAppointmentDto } from '../dto/create-appointment.dto';
 import { UpdateAppointmentDto } from '../dto/update-appointment.dto';
 import { AppointmentStatusEnum } from '../enums/appointment-status.enum';
+import { AppointmentTypeEnum, APPOINTMENT_DEFAULT_DURATIONS } from '../enums/appointment-type.enum';
 
 import { PatientsService } from '../../patients/services/patients.service';
 import { UsersService } from '../../users/services/users.service';
@@ -25,7 +26,22 @@ export class AppointmentsService {
     private usersService: UsersService,
   ) { }
 
-  private async checkDoubleBooking(doctorId: string, date: Date, excludeAppointmentId?: string): Promise<void> {
+  private resolveDuration(
+    type: AppointmentTypeEnum | string | undefined | null,
+    explicitDuration?: number | null,
+  ): number {
+    if (!type || type === AppointmentTypeEnum.OUTRO) {
+      return explicitDuration ?? 30;
+    }
+
+    return explicitDuration ?? APPOINTMENT_DEFAULT_DURATIONS[type as AppointmentTypeEnum] ?? 30;
+  }
+
+  private async checkDoubleBooking(doctorId: string, startTime: Date| string, durationMinutes: number, excludeAppointmentId?: string): Promise<void> {
+    const startDateTime = typeof startTime === 'string' ? new Date(startTime) : startTime;
+
+    const endTime = new Date(startDateTime.getTime() + durationMinutes * 60 * 1000);
+
     const activeStatuses = [
       AppointmentStatusEnum.SCHEDULED,
       AppointmentStatusEnum.CONFIRMED,
@@ -35,18 +51,34 @@ export class AppointmentsService {
 
     const whereClause: any = {
       doctor_id: doctorId,
-      appointment_date: date,
       status: { [Op.in]: activeStatuses },
+      appointment_date: { [Op.lt]: endTime },
+      [Op.and]: seqWhere(
+        literal(`appointment_date + (duration_minutes || 'minutes')::INTERVAL`),
+        { [Op.gt]: startDateTime },
+      ),
     };
 
     if (excludeAppointmentId) {
       whereClause.id = { [Op.ne]: excludeAppointmentId };
     }
 
-    const conflict = await this.appointmentModel.findOne({ where: whereClause });
+    const conflict = await this.appointmentModel.findOne({ where: whereClause, include: ['patient'] });
 
     if (conflict) {
-      throw new ConflictException('O médico selecionado já possui um paciente agendado para este horário.');
+      const conflictStart = new Date(conflict.appointment_date);
+      const conflictEnd = new Date(
+        conflictStart.getTime() + (conflict.duration_minutes ?? 30) * 60 * 1000,
+      );
+
+      const fmt = (d: Date) =>
+        d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      throw new ConflictException(
+        `Conflito de horário: o médico já possui "${conflict.appointment_type ?? 'atendimento'}" ` +
+        `das ${fmt(conflictStart)} às ${fmt(conflictEnd)} ` +
+        `com o paciente ${(conflict as any).patient?.name ?? 'outro paciente'}.`,
+      );
     }
   }
 
@@ -65,7 +97,9 @@ export class AppointmentsService {
       throw new BadRequestException('O usuário selecionado não possui o cargo de Médico.');
     }
 
-    await this.checkDoubleBooking(dto.doctor_id, dto.appointment_date);
+    const duration = this.resolveDuration(dto.appointment_type, dto.duration_minutes);
+
+    await this.checkDoubleBooking(doctorId, dto.appointment_date, duration);
 
     const transaction = await this.sequelize.transaction();
 
@@ -74,6 +108,7 @@ export class AppointmentsService {
         ...dto,
         doctor_id: doctorId,
         status: AppointmentStatusEnum.SCHEDULED,
+        duration_minutes: duration,
       } as CreationAttributes<Appointment>,
         { transaction }
       );
@@ -92,6 +127,8 @@ export class AppointmentsService {
     if (filters.patient_id) whereClause.patient_id = filters.patient_id;
     if (filters.doctor_id) whereClause.doctor_id = filters.doctor_id;
     if (filters.status) whereClause.status = filters.status;
+    if (filters.appointment_type) whereClause.appointment_type = filters.appointment_type;
+
 
     if (filters.start_date && filters.end_date) {
       whereClause.appointment_date = {
@@ -164,17 +201,26 @@ export class AppointmentsService {
       validateStatusTransition(appointment.status as AppointmentStatusEnum, dto.status as AppointmentStatusEnum);
     }
 
-    const newDoctorId = dto.doctor_id || appointment.doctor_id;
-    const newDate = dto.appointment_date || appointment.appointment_date;
+    const resolvedType = dto.appointment_type ?? appointment.appointment_type;
+    const resolvedDuration = this.resolveDuration(
+      resolvedType,
+      dto.duration_minutes ?? appointment.duration_minutes,
+    );
 
-    if (dto.appointment_date || dto.doctor_id) {
-      await this.checkDoubleBooking(newDoctorId, newDate, id);
+    const newDoctorId = dto.doctor_id || appointment.doctor_id;
+    const newStartTime = dto.appointment_date || appointment.appointment_date;
+
+    if (dto.appointment_date || dto.doctor_id || dto.duration_minutes || dto.appointment_type) {
+      await this.checkDoubleBooking(newDoctorId, newStartTime, resolvedDuration, id);
     }
 
     const transaction = await this.sequelize.transaction();
     try {
       const updatedAppointment = await appointment.update(
-        dto as Partial<CreationAttributes<Appointment>>,
+        {
+          ...dto,
+          duration_minutes: resolvedDuration,
+        } as Partial<CreationAttributes<Appointment>>,
         { transaction }
       );
       await transaction.commit();
@@ -196,7 +242,12 @@ export class AppointmentsService {
       AppointmentStatusEnum.RESCHEDULED,
     );
 
-    await this.checkDoubleBooking(original.doctor_id, newDate, id);
+    await this.checkDoubleBooking(
+      original.doctor_id,
+      newDate,
+      original.duration_minutes ?? 30,
+      id,
+    );
 
     const transaction = await this.sequelize.transaction();
     try {
@@ -207,12 +258,14 @@ export class AppointmentsService {
       );
 
       const newAppointment = await this.appointmentModel.create({
-        patient_id: original.patient_id,
-        doctor_id: original.doctor_id,
-        appointment_date: newDate,
-        notes: original.notes,
-        status: AppointmentStatusEnum.SCHEDULED,
-        rescheduled_from_id: original.id,
+        patient_id:          original.patient_id,
+          doctor_id:           original.doctor_id,
+          appointment_date:    newDate,
+          appointment_type:    original.appointment_type,
+          duration_minutes:    original.duration_minutes ?? 30,
+          notes:               original.notes,
+          status:              AppointmentStatusEnum.SCHEDULED,
+          rescheduled_from_id: original.id,
       } as CreationAttributes<Appointment>,
         { transaction },
       );
