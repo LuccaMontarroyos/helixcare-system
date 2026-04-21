@@ -5,6 +5,7 @@ import { PatientsModule } from '../patients/patients.module';
 import { UsersModule } from '../users/users.module';
 import { AppointmentsController } from './controllers/appointments.controller';
 import { AppointmentsService } from './services/appointments.service';
+import { AppointmentsNoShowScheduler } from './cron/appointments-no-show.scheduler';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { AppointmentsService } from './services/appointments.service';
     UsersModule,
   ],
   controllers: [AppointmentsController],
-  providers: [AppointmentsService],
+  providers: [AppointmentsService, AppointmentsNoShowScheduler],
   exports: [SequelizeModule, AppointmentsService],
 })
 export class AppointmentsModule {}

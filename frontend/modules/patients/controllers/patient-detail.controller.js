@@ -22,18 +22,18 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
     ToastService,
   ) {
     $scope.currentUser = AuthService.getCurrentUser();
-    $scope.patient     = null;
-    $scope.isLoading   = true;
-    $scope.activeTab   = "RESUMO";
+    $scope.patient = null;
+    $scope.isLoading = true;
+    $scope.activeTab = "RESUMO";
 
-    $scope.patientAge      = 0;
+    $scope.patientAge = 0;
     $scope.nextAppointment = null;
-    $scope.financials      = { invoices: [], totalDebt: 0, hasDebt: false };
+    $scope.financials = { invoices: [], totalDebt: 0, hasDebt: false };
 
-    $scope.history         = [];
+    $scope.history = [];
     $scope.isLoadingRecords = false;
-    $scope.isSaving        = false;
-    var recordsLoaded      = false;
+    $scope.isSaving = false;
+    var recordsLoaded = false;
 
     $scope.editor = _freshEditor();
 
@@ -44,17 +44,31 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
         anamnesis: "",
         diagnosis: "",
         prescription: "",
-        social_history: { is_smoker: false, consumes_alcohol: false, notes: "" },
+        social_history: {
+          is_smoker: false,
+          consumes_alcohol: false,
+          notes: "",
+        },
         attachments: [],
         isLockedByOther: false,
         lockedBy: null,
       };
     }
 
-    $scope.isAppointmentModalOpen  = false;
-    $scope.isSavingAppointment     = false;
-    $scope.newAppointmentForm      = { date: null, time: null, doctor_id: null, notes: "" };
-    $scope.doctorTypeahead         = { term: "", results: [], isOpen: false, loading: false };
+    $scope.isAppointmentModalOpen = false;
+    $scope.isSavingAppointment = false;
+    $scope.newAppointmentForm = {
+      date: null,
+      time: null,
+      doctor_id: null,
+      notes: "",
+    };
+    $scope.doctorTypeahead = {
+      term: "",
+      results: [],
+      isOpen: false,
+      loading: false,
+    };
 
     $scope.setTab = function (tabName) {
       $scope.activeTab = tabName;
@@ -75,7 +89,7 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
 
       PatientsService.getPatientById(patientId)
         .then(function (data) {
-          $scope.patient  = data;
+          $scope.patient = data;
           $scope.patientAge = _calculateAge(data.birth_date);
           _loadPatientEcosystem(patientId);
         })
@@ -90,26 +104,50 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
 
     function _calculateAge(birthDateString) {
       if (!birthDateString) return 0;
-      var today     = new Date();
+      var today = new Date();
       var birthDate = new Date(birthDateString);
-      var age       = today.getFullYear() - birthDate.getFullYear();
-      var m         = today.getMonth() - birthDate.getMonth();
+      var age = today.getFullYear() - birthDate.getFullYear();
+      var m = today.getMonth() - birthDate.getMonth();
       if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
       return age;
     }
 
     function _loadPatientEcosystem(patientId) {
-      var todayStr = new Date().toISOString().split("T")[0];
+      var now = new Date();
+      var todayStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0,
+        0,
+        0,
+        0,
+      );
 
       AppointmentsService.getAppointments({
         patient_id: patientId,
-        status: "SCHEDULED",
-        start_date: todayStr,
-        limit: 1,
+        start_date: todayStart.toISOString(),
+        limit: 5,
       })
         .then(function (res) {
           var appts = res.data || res.items || res;
-          if (appts && appts.length > 0) $scope.nextAppointment = appts[0];
+          var terminalStatus = [
+            "COMPLETED",
+            "NO_SHOW",
+            "RESCHEDULED",
+            "CANCELED",
+          ];
+          var next = null;
+
+          if (appts) {
+            for (var i = 0; i < appts.length; i++) {
+              if (terminalStatus.indexOf(appts[i].status) === -1) {
+                next = appts[i];
+                break;
+              }
+            }
+          }
+          $scope.nextAppointment = next;
         })
         .catch(function (err) {
           console.warn("Erro ao buscar próxima consulta.", err);
@@ -144,7 +182,7 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
       MedicalRecordsService.getPatientHistory(patientId)
         .then(function (res) {
           $scope.history = res.items || res.data || res;
-          recordsLoaded  = true;
+          recordsLoaded = true;
         })
         .catch(function () {
           ToastService.error("Falha ao carregar histórico clínico.");
@@ -188,21 +226,23 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
 
           if (isLockedByAnother) {
             $scope.editor.isLockedByOther = true;
-            $scope.editor.lockedBy        = status.lockedBy || "Outro profissional";
+            $scope.editor.lockedBy = status.lockedBy || "Outro profissional";
             ToastService.warning(
-              "Atenção: Este prontuário está sendo editado por " + $scope.editor.lockedBy,
+              "Atenção: Este prontuário está sendo editado por " +
+                $scope.editor.lockedBy,
             );
           } else {
             MedicalRecordsService.lockRecord(record.id)
               .then(function () {
                 $scope.editor.isLockedByOther = false;
-                $scope.editor.lockedBy        = $scope.currentUser.name;
+                $scope.editor.lockedBy = $scope.currentUser.name;
               })
               .catch(function (err) {
                 $scope.editor.isLockedByOther = true;
-                $scope.editor.lockedBy        = err.lockedBy || "Outro profissional";
+                $scope.editor.lockedBy = err.lockedBy || "Outro profissional";
                 ToastService.warning(
-                  "O registro acabou de ser travado por " + $scope.editor.lockedBy,
+                  "O registro acabou de ser travado por " +
+                    $scope.editor.lockedBy,
                 );
               });
           }
@@ -213,8 +253,14 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
     };
 
     $scope.releaseLock = function () {
-      if (!$scope.editor.isNew && $scope.editor.id && !$scope.editor.isLockedByOther) {
-        MedicalRecordsService.unlockRecord($scope.editor.id).catch(angular.noop);
+      if (
+        !$scope.editor.isNew &&
+        $scope.editor.id &&
+        !$scope.editor.isLockedByOther
+      ) {
+        MedicalRecordsService.unlockRecord($scope.editor.id).catch(
+          angular.noop,
+        );
       }
     };
 
@@ -240,10 +286,10 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
       $scope.isSaving = true;
 
       var payload = {
-        patient_id:     $scope.patient.id,
-        anamnesis:      $scope.editor.anamnesis,
-        diagnosis:      $scope.editor.diagnosis || null,
-        prescription:   $scope.editor.prescription || null,
+        patient_id: $scope.patient.id,
+        anamnesis: $scope.editor.anamnesis,
+        diagnosis: $scope.editor.diagnosis || null,
+        prescription: $scope.editor.prescription || null,
         social_history: $scope.editor.social_history,
       };
 
@@ -253,14 +299,19 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
 
       request
         .then(function (res) {
-          var recordId = res.id || (res.data && res.data.id) || $scope.editor.id;
-          var newFiles = $scope.editor.attachments.filter(function (a) { return !a.url; });
+          var recordId =
+            res.id || (res.data && res.data.id) || $scope.editor.id;
+          var newFiles = $scope.editor.attachments.filter(function (a) {
+            return !a.url;
+          });
 
           if (newFiles.length > 0) {
             var uploads = newFiles.map(function (file) {
               return MedicalRecordsService.uploadAttachment(recordId, file);
             });
-            return $q.all(uploads).then(function () { return res; });
+            return $q.all(uploads).then(function () {
+              return res;
+            });
           }
           return res;
         })
@@ -285,8 +336,18 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
     });
 
     $scope.openAppointmentModal = function () {
-      $scope.newAppointmentForm = { date: null, time: null, doctor_id: null, notes: "" };
-      $scope.doctorTypeahead    = { term: "", results: [], isOpen: false, loading: false };
+      $scope.newAppointmentForm = {
+        date: null,
+        time: null,
+        doctor_id: null,
+        notes: "",
+      };
+      $scope.doctorTypeahead = {
+        term: "",
+        results: [],
+        isOpen: false,
+        loading: false,
+      };
       $scope.isAppointmentModalOpen = true;
     };
 
@@ -296,7 +357,7 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
 
     $scope.searchDoctors = function () {
       if (!$scope.doctorTypeahead.term) {
-        $scope.doctorTypeahead.isOpen    = false;
+        $scope.doctorTypeahead.isOpen = false;
         $scope.newAppointmentForm.doctor_id = null;
         return;
       }
@@ -304,15 +365,17 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
       AppointmentsService.searchUsers($scope.doctorTypeahead.term)
         .then(function (res) {
           $scope.doctorTypeahead.results = res.items || res.data || res;
-          $scope.doctorTypeahead.isOpen  = true;
+          $scope.doctorTypeahead.isOpen = true;
         })
-        .finally(function () { $scope.doctorTypeahead.loading = false; });
+        .finally(function () {
+          $scope.doctorTypeahead.loading = false;
+        });
     };
 
     $scope.selectDoctor = function (doctor) {
       $scope.newAppointmentForm.doctor_id = doctor.id;
-      $scope.doctorTypeahead.term         = doctor.name;
-      $scope.doctorTypeahead.isOpen       = false;
+      $scope.doctorTypeahead.term = doctor.name;
+      $scope.doctorTypeahead.isOpen = false;
     };
 
     $scope.saveNewAppointment = function () {
@@ -328,22 +391,27 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
       $scope.isSavingAppointment = true;
 
       var finalDate = new Date($scope.newAppointmentForm.date);
-      var timeVal   = $scope.newAppointmentForm.time;
+      var timeVal = $scope.newAppointmentForm.time;
 
       if (angular.isString(timeVal)) {
         var parts = timeVal.split(":");
-        finalDate.setHours(parseInt(parts[0], 10) || 0, parseInt(parts[1], 10) || 0, 0, 0);
+        finalDate.setHours(
+          parseInt(parts[0], 10) || 0,
+          parseInt(parts[1], 10) || 0,
+          0,
+          0,
+        );
       } else {
         var timeObj = new Date(timeVal);
         finalDate.setHours(timeObj.getHours(), timeObj.getMinutes(), 0, 0);
       }
 
       AppointmentsService.createAppointment({
-        patient_id:       $scope.patient.id,
-        doctor_id:        $scope.newAppointmentForm.doctor_id,
+        patient_id: $scope.patient.id,
+        doctor_id: $scope.newAppointmentForm.doctor_id,
         appointment_date: finalDate.toISOString(),
-        notes:            $scope.newAppointmentForm.notes || "",
-        status:           "SCHEDULED",
+        notes: $scope.newAppointmentForm.notes || "",
+        status: "SCHEDULED",
       })
         .then(function () {
           ToastService.success("Consulta agendada com sucesso!");
@@ -355,11 +423,15 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
           if (angular.isArray(msg)) msg = msg.join("<br>");
           ToastService.error(msg, "Falha");
         })
-        .finally(function () { $scope.isSavingAppointment = false; });
+        .finally(function () {
+          $scope.isSavingAppointment = false;
+        });
     };
 
     $scope.isOverdue = function (invoice) {
-      return invoice.status === "PENDING" && new Date(invoice.due_date) < new Date();
+      return (
+        invoice.status === "PENDING" && new Date(invoice.due_date) < new Date()
+      );
     };
 
     $scope.formatText = function (text) {
@@ -369,10 +441,10 @@ angular.module("helixcare.patients").controller("PatientDetailController", [
 
     $scope.getMethodIcon = function (method) {
       var icons = {
-        CREDIT_CARD:       "credit_card",
-        PIX:               "qr_code",
-        HEALTH_INSURANCE:  "shield",
-        CASH:              "payments",
+        CREDIT_CARD: "credit_card",
+        PIX: "qr_code",
+        HEALTH_INSURANCE: "shield",
+        CASH: "payments",
       };
       return icons[method] || "receipt";
     };

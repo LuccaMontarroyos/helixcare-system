@@ -18,7 +18,7 @@ angular.module('helixcare.medicalRecords')
 
             var filters = {
                 date: dateString,
-                status: 'CONFIRMED'
+                status: 'WAITING'
             };
 
             if (currentUser && currentUser.role === 'DOCTOR') {
@@ -44,6 +44,24 @@ angular.module('helixcare.medicalRecords')
         };
 
         $scope.attendPatient = function(patientId, appointmentId) {
+            var appt = null;
+            for (var i = 0; i < $scope.waitingPatients.length; i++) {
+                if ($scope.waitingPatients[i].id === appointmentId) {
+                    appt = $scope.waitingPatients[i]; break;
+                }
+            }
+
+            if (appt) {
+                var payload = {
+                    patient_id:       appt.patient ? appt.patient.id : appt.patient_id,
+                    doctor_id:        appt.doctor  ? appt.doctor.id  : appt.doctor_id,
+                    appointment_date: appt.appointment_date,
+                    notes:            appt.notes || "",
+                    status:           'IN_PROGRESS',
+                };
+                AppointmentsService.updateStatus(appointmentId, payload).catch(angular.noop);
+            }
+
             $state.go('patient-medical-records', { patientId: patientId, appointmentId: appointmentId });
         };
 
