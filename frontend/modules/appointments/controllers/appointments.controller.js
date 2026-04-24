@@ -1,5 +1,6 @@
 angular.module("helixcare.appointments").controller("AppointmentsController", [
   "$scope",
+  "$state",
   "$filter",
   "AppointmentsService",
   "PatientsService",
@@ -8,6 +9,7 @@ angular.module("helixcare.appointments").controller("AppointmentsController", [
   "APPOINTMENT_TYPES",
   function (
     $scope,
+    $state,
     $filter,
     AppointmentsService,
     PatientsService,
@@ -796,6 +798,28 @@ angular.module("helixcare.appointments").controller("AppointmentsController", [
         _typeLabelMap[type.value] = type.label;
       });
     });
+
+    $scope.receivePatientDirect = function (appt) {
+      var payload = {
+        patient_id: appt.patient ? appt.patient.id : appt.patient_id,
+        doctor_id: appt.doctor ? appt.doctor.id : appt.doctor_id,
+        appointment_date: appt.appointment_date,
+        notes: appt.notes || "",
+        status: "IN_PROGRESS",
+      };
+
+      AppointmentsService.updateStatus(appt.id, payload)
+        .then(function () {
+          $state.go("patient-medical-records", {
+            patientId: appt.patient ? appt.patient.id : appt.patient_id,
+            appointmentId: appt.id,
+          });
+        })
+        .catch(function (err) {
+          var msg = err.message || err.error || "Falha ao receber paciente.";
+          ToastService.error(msg, "Erro");
+        });
+    };
 
     $scope.getTypeLabel = function (value) {
       return _typeLabelMap[value] || value;

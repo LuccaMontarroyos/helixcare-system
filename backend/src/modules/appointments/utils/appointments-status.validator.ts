@@ -2,14 +2,14 @@ import { BadRequestException } from '@nestjs/common';
 import { AppointmentStatusEnum } from '../enums/appointment-status.enum';
 
 const VALID_TRANSITIONS: Partial<Record<AppointmentStatusEnum, AppointmentStatusEnum[]>> = {
-  [AppointmentStatusEnum.SCHEDULED]:   [AppointmentStatusEnum.CONFIRMED, AppointmentStatusEnum.RESCHEDULED, AppointmentStatusEnum.CANCELED],
-  [AppointmentStatusEnum.CONFIRMED]:   [AppointmentStatusEnum.WAITING, AppointmentStatusEnum.NO_SHOW, AppointmentStatusEnum.RESCHEDULED, AppointmentStatusEnum.CANCELED],
-  [AppointmentStatusEnum.WAITING]:     [AppointmentStatusEnum.IN_PROGRESS, AppointmentStatusEnum.CANCELED],
+  [AppointmentStatusEnum.SCHEDULED]: [AppointmentStatusEnum.CONFIRMED, AppointmentStatusEnum.WAITING, AppointmentStatusEnum.IN_PROGRESS, AppointmentStatusEnum.RESCHEDULED, AppointmentStatusEnum.CANCELED],
+  [AppointmentStatusEnum.CONFIRMED]: [AppointmentStatusEnum.WAITING, AppointmentStatusEnum.IN_PROGRESS, AppointmentStatusEnum.NO_SHOW, AppointmentStatusEnum.RESCHEDULED, AppointmentStatusEnum.CANCELED],
+  [AppointmentStatusEnum.WAITING]: [AppointmentStatusEnum.IN_PROGRESS, AppointmentStatusEnum.CANCELED],
   [AppointmentStatusEnum.IN_PROGRESS]: [AppointmentStatusEnum.COMPLETED, AppointmentStatusEnum.CANCELED],
-  [AppointmentStatusEnum.COMPLETED]:   [],
-  [AppointmentStatusEnum.NO_SHOW]:     [],
+  [AppointmentStatusEnum.COMPLETED]: [],
+  [AppointmentStatusEnum.NO_SHOW]: [],
   [AppointmentStatusEnum.RESCHEDULED]: [],
-  [AppointmentStatusEnum.CANCELED]:    [],
+  [AppointmentStatusEnum.CANCELED]: [],
 };
 
 export const NON_REMOVABLE_STATUSES = [

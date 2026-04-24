@@ -223,38 +223,60 @@ angular
 
             AppointmentsService.getAppointmentById(sourceAppointmentId)
               .then(function (appt) {
-                var statusesInProgress = [
-                  "WAITING",
-                  "IN_PROGRESS",
-                  "CONFIRMED",
-                ];
-
-                if (statusesInProgress.indexOf(appt.status) === -1) {
-                  console.warn(
-                    "[AGENDA] Consulta não estava em atendimento. Status atual:",
-                    appt.status,
-                    "— nenhuma ação tomada.",
-                  );
-                  return;
-                }
-
-                var payload = {
-                  patient_id: appt.patient ? appt.patient.id : appt.patient_id,
-                  doctor_id: appt.doctor ? appt.doctor.id : appt.doctor_id,
+                var patientId = appt.patient ? appt.patient.id : appt.patient_id;
+                var doctorId = appt.doctor ? appt.doctor.id : appt.doctor_id;
+                var basePayload = {
+                  patient_id: patientId,
+                  doctor_id: doctorId,
                   appointment_date: appt.appointment_date,
                   notes: appt.notes || "",
-                  status: "COMPLETED",
                 };
 
-                return AppointmentsService.updateAppointment(
-                  sourceAppointmentId,
-                  payload,
-                );
+                if (
+                  ["COMPLETED", "NO_SHOW", "RESCHEDULED", "CANCELED"].indexOf(
+                    appt.status,
+                  ) !== -1
+                ) {
+                  return null;
+                }
+
+                var ensureInProgressPromise = ["IN_PROGRESS"].indexOf(
+                  appt.status,
+                ) !== -1
+                  ? $q.when(appt)
+                  : AppointmentsService.updateAppointment(sourceAppointmentId, {
+                      patient_id: basePayload.patient_id,
+                      doctor_id: basePayload.doctor_id,
+                      appointment_date: basePayload.appointment_date,
+                      notes: basePayload.notes,
+                      status: "IN_PROGRESS",
+                    });
+
+                return ensureInProgressPromise.then(function () {
+                  return AppointmentsService.updateAppointment(
+                    sourceAppointmentId,
+                    {
+                      patient_id: basePayload.patient_id,
+                      doctor_id: basePayload.doctor_id,
+                      appointment_date: basePayload.appointment_date,
+                      notes: basePayload.notes,
+                      status: "COMPLETED",
+                    },
+                  );
+                });
               })
-              .then(function () {
-                ToastService.info("Consulta marcada como concluída na agenda.");
+              .then(function (completionResult) {
+                if (completionResult) {
+                  ToastService.info("Consulta marcada como concluída na agenda.");
+                }
               })
               .catch(function (err) {
+                var scheduleMsg =
+                  err.message ||
+                  err.error ||
+                  "Evolução salva, mas não foi possível concluir a consulta na agenda.";
+                if (angular.isArray(scheduleMsg)) scheduleMsg = scheduleMsg.join("<br>");
+                ToastService.warning(scheduleMsg);
                 console.error("[AGENDA] Falha ao concluir consulta:", err);
               });
 
