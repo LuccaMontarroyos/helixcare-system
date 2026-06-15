@@ -465,6 +465,14 @@ angular.module("helixcare.appointments").controller("AppointmentsController", [
       );
     };
 
+    $scope.cancelAppointment = function (appt) {
+      if (
+        !confirm("Confirmar cancelamento da consulta de " + appt.patient.name + "?")
+      )
+        return;
+      _changeStatus(appt, "CANCELED", "Consulta cancelada.");
+    };
+
     $scope.deleteAppointment = function (appointment) {
       if (!confirm("Tem certeza que deseja remover este agendamento?")) return;
       AppointmentsService.deleteAppointment(appointment.id)
@@ -888,6 +896,10 @@ angular.module("helixcare.appointments").controller("AppointmentsController", [
         ["COMPLETED", "NO_SHOW", "RESCHEDULED", "CANCELED"].indexOf(status) !==
         -1
       );
+    };
+
+    $scope.canCancelAppointment = function (status) {
+      return ["SCHEDULED", "CONFIRMED", "WAITING", "IN_PROGRESS"].indexOf(status) !== -1;
     };
 
     $scope.init();

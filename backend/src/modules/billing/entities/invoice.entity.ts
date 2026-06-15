@@ -62,6 +62,18 @@ export class Invoice extends Model<Invoice> {
   @Column({ type: DataType.TEXT, allowNull: true })
   declare notes: string;
 
+  @Column({ type: DataType.STRING(50), allowNull: true })
+  declare payment_provider: string;
+
+  @Column({ type: DataType.STRING(120), allowNull: true })
+  declare provider_checkout_session_id: string;
+
+  @Column({ type: DataType.TEXT, allowNull: true })
+  declare checkout_url: string;
+
+  @Column({ type: DataType.STRING(120), allowNull: true })
+  declare provider_payment_id: string;
+
   @CreatedAt
   declare created_at: Date;
 

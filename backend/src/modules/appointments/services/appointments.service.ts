@@ -14,6 +14,8 @@ import { RoleEnum } from '../../roles/enums/roles.enum';
 
 import { ICurrentUser } from 'src/modules/auth/interfaces/current-user.interface';
 import { validateStatusTransition, NON_REMOVABLE_STATUSES } from '../utils/appointments-status.validator';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { AppointmentArrivedEvent } from './../../billing/domain-events/appointment-arrived.event';
 
 
 @Injectable()
@@ -24,6 +26,7 @@ export class AppointmentsService {
     private sequelize: Sequelize,
     private patientsService: PatientsService,
     private usersService: UsersService,
+    private eventEmitter: EventEmitter2,
   ) { }
 
   private resolveDuration(
@@ -197,6 +200,10 @@ export class AppointmentsService {
   async update(id: string, dto: UpdateAppointmentDto): Promise<Appointment> {
     const appointment = await this.findOne(id);
 
+    const isTransitioningToWaiting =
+      dto.status === AppointmentStatusEnum.WAITING &&
+      appointment.status !== AppointmentStatusEnum.WAITING;
+
     if (dto.status && dto.status !== appointment.status) {
       validateStatusTransition(appointment.status as AppointmentStatusEnum, dto.status as AppointmentStatusEnum);
     }
@@ -216,7 +223,7 @@ export class AppointmentsService {
 
     const transaction = await this.sequelize.transaction();
     try {
-      const updatedAppointment = await appointment.update(
+      const updated = await appointment.update(
         {
           ...dto,
           duration_minutes: resolvedDuration,
@@ -224,7 +231,19 @@ export class AppointmentsService {
         { transaction }
       );
       await transaction.commit();
-      return updatedAppointment;
+      if (isTransitioningToWaiting) {
+        this.eventEmitter.emit(
+          'appointment.arrived',
+          new AppointmentArrivedEvent(
+            updated.id,
+            updated.patient_id,
+            updated.doctor_id,
+            updated.appointment_type,
+            updated.appointment_date,
+          ),
+        );
+      }
+      return updated;
     } catch (error) {
       await transaction.rollback();
       throw error;

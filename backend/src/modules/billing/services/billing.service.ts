@@ -5,8 +5,10 @@ import { CreationAttributes, Op } from 'sequelize';
 import { Invoice } from '../entities/invoice.entity';
 import { CreateInvoiceDto } from '../dtos/create-invoice.dto';
 import { UpdateInvoiceStatusDto } from '../dtos/update-invoice-status.dto';
+import { GatewayWebhookDto } from '../dtos/gateway-webhook.dto';
 import { InvoiceStatusEnum } from '../enums/invoice-status.enum';
 import { PaymentMethodEnum } from '../enums/payment-method.enum';
+import { BillingPaymentGatewayService } from './billing-payment-gateway.service';
 
 import { PatientsService } from '../../patients/services/patients.service';
 import { AppointmentsService } from '../../appointments/services/appointments.service';
@@ -24,6 +26,7 @@ export class BillingService {
     private patientsService: PatientsService,
     private appointmentsService: AppointmentsService,
     private examsService: ExamsService,
+    private billingPaymentGatewayService: BillingPaymentGatewayService,
   ) {}
 
   async create(dto: CreateInvoiceDto): Promise<Invoice> {
@@ -142,5 +145,87 @@ export class BillingService {
 
     await invoice.update({ status: InvoiceStatusEnum.CANCELED });
     await invoice.destroy();
+  }
+
+  async createCheckoutForInvoice(id: string, forceRefresh: boolean = false): Promise<Invoice> {
+    const invoice = await this.findOne(id);
+
+    if (
+      !forceRefresh &&
+      invoice.checkout_url &&
+      invoice.provider_checkout_session_id &&
+      invoice.status === InvoiceStatusEnum.PENDING
+    ) {
+      return invoice;
+    }
+
+    const checkout = this.billingPaymentGatewayService.createCheckout(invoice);
+
+    await invoice.update({
+      payment_provider: checkout.provider,
+      provider_checkout_session_id: checkout.providerCheckoutSessionId,
+      checkout_url: checkout.checkoutUrl,
+    });
+
+    return await this.findOne(id);
+  }
+
+  async handleGatewayWebhook(payload: GatewayWebhookDto, signature?: string) {
+    this.billingPaymentGatewayService.verifyWebhookSignature(
+      payload as unknown as Record<string, unknown>,
+      signature,
+    );
+
+    const invoice = await this.findOne(payload.data.invoice_id);
+    const incomingStatus = String(payload.data.status || '').toUpperCase();
+    const isPaidEvent =
+      incomingStatus === InvoiceStatusEnum.PAID ||
+      String(payload.event_type || '').toLowerCase().includes('paid');
+
+    const alreadyProcessed =
+      isPaidEvent &&
+      invoice.status === InvoiceStatusEnum.PAID &&
+      (!!payload.data.provider_payment_id
+        ? invoice.provider_payment_id === payload.data.provider_payment_id
+        : true);
+
+    if (alreadyProcessed) {
+      return {
+        ok: true,
+        already_processed: true,
+        invoice_id: invoice.id,
+      };
+    }
+
+    const updates: Partial<CreationAttributes<Invoice>> = {
+      payment_provider: payload.provider || invoice.payment_provider,
+      provider_payment_id: payload.data.provider_payment_id || invoice.provider_payment_id,
+      provider_checkout_session_id:
+        payload.data.provider_checkout_session_id || invoice.provider_checkout_session_id,
+      notes: this.appendWebhookNote(invoice.notes, payload.event_id),
+    };
+
+    if (isPaidEvent) {
+      updates.status = InvoiceStatusEnum.PAID;
+      updates.paid_at = invoice.paid_at || new Date();
+    }
+
+    await invoice.update(updates);
+
+    return {
+      ok: true,
+      already_processed: false,
+      invoice_id: invoice.id,
+      status: updates.status || invoice.status,
+    };
+  }
+
+  private appendWebhookNote(previousNotes: string | null, eventId: string): string {
+    const marker = `[gateway-webhook:${eventId}]`;
+    const notes = previousNotes || '';
+    if (notes.includes(marker)) return notes;
+
+    const line = `\n${marker} ${new Date().toISOString()}`;
+    return `${notes}${line}`.trim();
   }
 }

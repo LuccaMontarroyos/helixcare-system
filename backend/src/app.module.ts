@@ -12,12 +12,18 @@ import { RedisModule } from './core/redis/redis.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { ExamsModule } from './modules/exams/exams.module';
 import { BillingModule } from './modules/billing/billing.module';
-import { CloudService } from './core/cloud/cloud.service';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { SearchModule } from './search/search.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot({
+      wildcard: false,
+      delimiter: '.',
+      maxListeners: 20,
+      verboseMemoryLeak: true,
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',

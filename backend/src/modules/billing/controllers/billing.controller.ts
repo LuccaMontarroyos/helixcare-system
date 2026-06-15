@@ -3,7 +3,9 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@ne
 import { BillingService } from '../services/billing.service';
 import { CreateInvoiceDto } from '../dtos/create-invoice.dto';
 import { UpdateInvoiceStatusDto } from '../dtos/update-invoice-status.dto';
+import { CreateCheckoutDto } from '../dtos/create-checkout.dto';
 import { createInvoiceSchema } from '../schemas/create-invoice.schema';
+import { createCheckoutSchema } from '../schemas/create-checkout.schema';
 import { updateInvoiceStatusSchema } from '../schemas/update-invoice-status.schema';
 
 import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
@@ -64,6 +66,15 @@ export class BillingController {
     @Body(new YupValidationPipe(updateInvoiceStatusSchema)) updateInvoiceStatusDto: UpdateInvoiceStatusDto,
   ) {
     return await this.billingService.updateStatus(id, updateInvoiceStatusDto);
+  }
+
+  @Post(':id/checkout')
+  @ApiOperation({ summary: 'Gera (ou reaproveita) checkout de pagamento da fatura' })
+  async createCheckout(
+    @Param('id') id: string,
+    @Body(new YupValidationPipe(createCheckoutSchema)) dto: CreateCheckoutDto,
+  ) {
+    return await this.billingService.createCheckoutForInvoice(id, !!dto.force_refresh);
   }
 
   @Delete(':id')

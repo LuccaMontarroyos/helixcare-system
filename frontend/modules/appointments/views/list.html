@@ -308,6 +308,13 @@
                 <span class="material-symbols-outlined text-sm animate-pulse">stethoscope</span> Em andamento
             </span>
 
+            <button ng-if="canCancelAppointment(appt.status)"
+                hc-has-role="['DOCTOR', 'ADMIN', 'RECEPTIONIST']" ng-click="cancelAppointment(appt)"
+                class="flex items-center gap-1.5 bg-red-50 text-red-700 border border-red-200 px-3 py-2 rounded-lg text-sm font-bold hover:bg-red-100 transition-colors"
+                title="Cancelar consulta">
+                <span class="material-symbols-outlined text-sm">event_busy</span> Cancelar
+            </button>
+
             <button ng-if="appt.status === 'SCHEDULED' || appt.status === 'CONFIRMED'"
                 hc-has-role="['ADMIN', 'RECEPTIONIST']" ng-click="openRescheduleModal(appt)"
                 class="p-2 text-slate-400 hover:text-amber-500 transition-colors rounded-lg hover:bg-amber-50"

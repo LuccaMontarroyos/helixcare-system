@@ -6,10 +6,12 @@ import { UsersModule } from '../users/users.module';
 import { AppointmentsController } from './controllers/appointments.controller';
 import { AppointmentsService } from './services/appointments.service';
 import { AppointmentsNoShowScheduler } from './cron/appointments-no-show.scheduler';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
     SequelizeModule.forFeature([Appointment]),
+    EventEmitterModule,
     PatientsModule,
     UsersModule,
   ],

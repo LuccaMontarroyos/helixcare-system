@@ -1,3 +1,4 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
@@ -13,6 +14,7 @@ import { RoleEnum } from '../../roles/enums/roles.enum';
 import { User } from '../../users/entities/user.entity';
 import { CloudService } from 'src/core/cloud/cloud.service';
 import { Patient } from 'src/modules/patients/entities/patient.entity';
+import { ExamCompletedEvent } from 'src/modules/billing/domain-events/exam-completed.event';
 
 @Injectable()
 export class ExamsService {
@@ -23,7 +25,8 @@ export class ExamsService {
     private patientsService: PatientsService,
     private usersService: UsersService,
     private cloudService: CloudService,
-  ) {}
+    private eventEmitter: EventEmitter2,
+  ) { }
 
   async create(doctorId: string, dto: CreateExamDto): Promise<Exam> {
     await this.patientsService.findOne(dto.patient_id);
@@ -40,7 +43,7 @@ export class ExamsService {
         examData as CreationAttributes<Exam>,
         { transaction }
       );
-      
+
       await transaction.commit();
       return exam;
     } catch (error) {
@@ -57,7 +60,7 @@ export class ExamsService {
     if (filters.doctor_id) whereClause.doctor_id = filters.doctor_id;
     if (filters.lab_technician_id) whereClause.lab_technician_id = filters.lab_technician_id;
     if (filters.status) whereClause.status = filters.status;
-    
+
     if (filters.exam_type) {
       whereClause.exam_type = { [Op.iLike]: `%${filters.exam_type}%` };
     }
@@ -67,7 +70,7 @@ export class ExamsService {
       include: [
         { model: User, as: 'doctor', attributes: ['id', 'name'] },
         { model: User, as: 'lab_technician', attributes: ['id', 'name'] },
-        { model: Patient, as: 'patient', attributes: ['id', 'name', 'cpf']}
+        { model: Patient, as: 'patient', attributes: ['id', 'name', 'cpf'] }
       ],
       order: [['created_at', 'DESC']],
       limit,
@@ -82,10 +85,10 @@ export class ExamsService {
       include: [
         { model: User, as: 'doctor', attributes: ['id', 'name'] },
         { model: User, as: 'lab_technician', attributes: ['id', 'name'] },
-        { model: Patient, as: 'patient', attributes: ['id', 'name', 'cpf']}
+        { model: Patient, as: 'patient', attributes: ['id', 'name', 'cpf'] }
       ]
     });
-    
+
     if (!exam) throw new NotFoundException('Exame não encontrado.');
     return exam;
   }
@@ -101,9 +104,14 @@ export class ExamsService {
       throw new ForbiddenException('Apenas o técnico que finalizou o laudo original pode alterá-lo.');
     }
 
+    const isCompleting =
+      dto.status === ExamStatusEnum.COMPLETED &&
+      exam.status !== ExamStatusEnum.COMPLETED;
+
+
     const transaction = await this.sequelize.transaction();
     try {
-      const updatedExam = await exam.update(
+      const updated = await exam.update(
         {
           status: dto.status,
           result_text: dto.result_text !== undefined ? dto.result_text : exam.result_text,
@@ -111,9 +119,20 @@ export class ExamsService {
         } as Partial<CreationAttributes<Exam>>,
         { transaction }
       );
-      
+
       await transaction.commit();
-      return updatedExam;
+
+      if (isCompleting) {
+        this.eventEmitter.emit(
+          'exam.completed',
+          new ExamCompletedEvent(
+            updated.id,
+            updated.patient_id,
+            updated.exam_type,
+          ),
+        );
+      }
+      return updated;
     } catch (error) {
       await transaction.rollback();
       throw error;
@@ -122,7 +141,7 @@ export class ExamsService {
 
   async remove(id: string): Promise<void> {
     const exam = await this.findOne(id);
-    
+
     if (exam.status === ExamStatusEnum.COMPLETED || exam.status === ExamStatusEnum.IN_PROGRESS) {
       throw new BadRequestException('Exames em andamento ou finalizados não podem ser excluídos. Utilize o status CANCELED se necessário.');
     }
