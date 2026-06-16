@@ -29,6 +29,16 @@ export class BillingService {
     private billingPaymentGatewayService: BillingPaymentGatewayService,
   ) {}
 
+  async hasActiveInvoiceForAppointment(appointmentId: string): Promise<boolean> {
+    const invoice = await this.invoiceModel.findOne({
+      where: {
+        appointment_id: appointmentId,
+        status: { [Op.ne]: InvoiceStatusEnum.CANCELED },
+      },
+    });
+    return invoice !== null;
+  }
+
   async create(dto: CreateInvoiceDto): Promise<Invoice> {
     const patient = await this.patientsService.findOne(dto.patient_id);
 

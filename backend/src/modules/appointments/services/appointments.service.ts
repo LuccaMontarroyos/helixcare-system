@@ -15,7 +15,7 @@ import { RoleEnum } from '../../roles/enums/roles.enum';
 import { ICurrentUser } from 'src/modules/auth/interfaces/current-user.interface';
 import { validateStatusTransition, NON_REMOVABLE_STATUSES } from '../utils/appointments-status.validator';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { AppointmentArrivedEvent } from './../../billing/domain-events/appointment-arrived.event';
+import { AppointmentCompletedEvent } from './../../billing/domain-events/appointment-completed.event';
 
 
 @Injectable()
@@ -200,9 +200,9 @@ export class AppointmentsService {
   async update(id: string, dto: UpdateAppointmentDto): Promise<Appointment> {
     const appointment = await this.findOne(id);
 
-    const isTransitioningToWaiting =
-      dto.status === AppointmentStatusEnum.WAITING &&
-      appointment.status !== AppointmentStatusEnum.WAITING;
+    const isTransitioningToCompleted =
+      dto.status === AppointmentStatusEnum.COMPLETED &&
+      appointment.status !== AppointmentStatusEnum.COMPLETED;
 
     if (dto.status && dto.status !== appointment.status) {
       validateStatusTransition(appointment.status as AppointmentStatusEnum, dto.status as AppointmentStatusEnum);
@@ -231,10 +231,10 @@ export class AppointmentsService {
         { transaction }
       );
       await transaction.commit();
-      if (isTransitioningToWaiting) {
+      if (isTransitioningToCompleted) {
         this.eventEmitter.emit(
-          'appointment.arrived',
-          new AppointmentArrivedEvent(
+          'appointment.completed',
+          new AppointmentCompletedEvent(
             updated.id,
             updated.patient_id,
             updated.doctor_id,

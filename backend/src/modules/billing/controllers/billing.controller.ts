@@ -23,7 +23,8 @@ export class BillingController {
   constructor(private readonly billingService: BillingService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Gera uma nova cobrança/fatura para um paciente' })
+  @Roles(RoleEnum.ADMIN)
+  @ApiOperation({ summary: 'Gera uma nova cobrança/fatura para um paciente (ADMIN only — via exceção manual)' })
   @ApiResponse({ status: 201, description: 'Fatura criada com sucesso.' })
   async create(
     @Body(new YupValidationPipe(createInvoiceSchema)) createInvoiceDto: CreateInvoiceDto,
