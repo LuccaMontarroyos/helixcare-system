@@ -224,18 +224,37 @@
 
 <div class="space-y-4 animate-fade-in" ng-if="!isLoading && appointments.length > 0">
     <div ng-repeat="appt in appointments"
-        class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center gap-6"
-        ng-class="{'opacity-55 grayscale-[0.4]': isTerminalStatus(appt.status)}">
+        class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-l-4 rounded-xl p-5 shadow-sm hover:shadow-md transition-all grid grid-cols-1 md:grid-cols-[1fr_180px_148px_auto] md:items-center gap-4 md:gap-6"
+        ng-class="{
+            'opacity-55 grayscale-[0.4]': isTerminalStatus(appt.status),
+            'border-l-sky-400': appt.status === 'SCHEDULED',
+            'border-l-blue-500': appt.status === 'CONFIRMED',
+            'border-l-amber-400': appt.status === 'WAITING',
+            'border-l-violet-500': appt.status === 'IN_PROGRESS',
+            'border-l-emerald-500': appt.status === 'COMPLETED',
+            'border-l-rose-400': appt.status === 'NO_SHOW',
+            'border-l-slate-300': appt.status === 'RESCHEDULED',
+            'border-l-red-400': appt.status === 'CANCELED'
+        }"
+        ng-click="appt._menuOpen = false">
 
-        <div class="flex items-center gap-4 flex-1">
+        <!-- Cell 1: Patient Info -->
+        <div class="flex items-center gap-4">
             <div class="size-14 rounded-full overflow-hidden ring-2 shrink-0 flex items-center justify-center font-bold text-xl"
                 ng-class="appt.status === 'CANCELED' ? 'ring-slate-200 bg-slate-100 text-slate-400' : 'ring-primary/20 bg-primary/10 text-primary'">
                 {{ appt.patient.name.charAt(0) | uppercase }}
             </div>
-            <div>
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-none mb-1">
-                    {{ appt.patient.name }}
-                </h3>
+            <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-none truncate">
+                        {{ appt.patient.name }}
+                    </h3>
+                    <!-- Mobile-only status badge (Cell 3 is hidden on mobile) -->
+                    <span class="md:hidden inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider shrink-0"
+                        ng-class="getStatusConfig(appt.status).class">
+                        {{ getStatusConfig(appt.status).text }}
+                    </span>
+                </div>
 
                 <p class="text-slate-500 text-sm flex items-center gap-1 font-medium">
                     <span class="material-symbols-outlined text-[16px]">{{ getStatusConfig(appt.status).icon }}</span>
@@ -245,96 +264,117 @@
                     </span>
                 </p>
 
-                <p ng-if="appt.appointment_type && appt.appointment_type !== 'OUTRO'"
-                    class="text-xs text-primary font-semibold mt-0.5 flex items-center gap-1">
+                <span ng-if="appt.appointment_type && appt.appointment_type !== 'OUTRO'"
+                    class="inline-flex items-center gap-1 bg-primary/8 text-primary text-[11px] font-semibold px-2 py-0.5 rounded-full mt-1">
                     <span class="material-symbols-outlined text-[13px]">medical_services</span>
                     {{ getTypeLabel(appt.appointment_type) }}
-                </p>
+                </span>
 
-                <p class="text-xs text-slate-400 mt-1 italic" ng-if="appt.notes">
+                <p class="text-xs text-slate-400 mt-1 italic line-clamp-1" ng-if="appt.notes">
                     {{ appt.notes }}
                 </p>
             </div>
         </div>
 
-        <div class="flex flex-col md:items-end gap-1">
+        <!-- Cell 2: Doctor -->
+        <div class="flex flex-col gap-1">
             <span class="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">Médico</span>
-            <span class="text-slate-700 dark:text-slate-200 font-semibold leading-none">{{ appt.doctor.name || 'N/A'
-                }}</span>
+            <span class="text-slate-700 dark:text-slate-200 font-semibold leading-none">{{ appt.doctor.name || 'N/A' }}</span>
         </div>
 
-        <div class="flex items-center gap-3">
-            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+        <!-- Cell 3: Status (Desktop Only) -->
+        <div class="hidden md:flex items-center">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
                 ng-class="getStatusConfig(appt.status).class">
+                <span class="material-symbols-outlined text-[14px]">{{ getStatusConfig(appt.status).icon }}</span>
                 {{ getStatusConfig(appt.status).text }}
             </span>
         </div>
 
-        <div
-            class="flex items-center gap-2 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-700 pt-4 md:pt-0 md:pl-6">
-            
+        <!-- Cell 4: Actions -->
+        <div class="flex items-center gap-1.5 flex-wrap border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-700 pt-4 md:pt-0 md:pl-5">
+
+            <!-- TIER 1 & 2: Workflow CTAs -->
             <button ng-if="appt.status === 'SCHEDULED'" hc-has-role="['RECEPTIONIST', 'ADMIN']"
                 ng-click="confirmAppointment(appt)"
-                class="flex items-center gap-1.5 bg-sky-50 text-sky-700 border border-sky-200 px-3 py-2 rounded-lg text-sm font-bold hover:bg-sky-100 transition-colors">
+                class="flex items-center gap-1.5 bg-sky-500 text-white rounded-lg px-3.5 py-1.5 text-sm font-bold shadow-sm shadow-sky-300/40 hover:bg-sky-600 active:scale-[0.97] transition-all duration-150 shrink-0">
                 <span class="material-symbols-outlined text-sm">check_circle</span> Confirmar
             </button>
 
             <button ng-if="appt.status === 'SCHEDULED'" hc-has-role="['DOCTOR', 'ADMIN']"
                 ng-click="receivePatientDirect(appt)"
-                class="flex items-center gap-1.5 bg-violet-50 text-violet-700 border border-violet-200 px-3 py-2 rounded-lg text-sm font-bold hover:bg-violet-100 transition-colors"
+                class="flex items-center gap-1.5 border border-violet-300 text-violet-600 rounded-lg px-3.5 py-1.5 text-sm font-bold hover:bg-violet-50 active:scale-[0.97] transition-all duration-150 shrink-0"
                 title="Paciente chegou sem confirmação prévia">
-                <span class="material-symbols-outlined text-sm">login</span> Receber Paciente
+                <span class="material-symbols-outlined text-sm">login</span> Receber
             </button>
 
             <ng-container ng-if="appt.status === 'CONFIRMED'">
                 <button hc-has-role="['RECEPTIONIST', 'ADMIN']" ng-click="markAsWaiting(appt)"
-                    class="flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 px-3 py-2 rounded-lg text-sm font-bold hover:bg-amber-100 transition-colors">
+                    class="flex items-center gap-1.5 bg-amber-500 text-white rounded-lg px-3.5 py-1.5 text-sm font-bold shadow-sm shadow-amber-300/40 hover:bg-amber-600 active:scale-[0.97] transition-all duration-150 shrink-0">
                     <span class="material-symbols-outlined text-sm">chair</span> Chegou
                 </button>
                 <button hc-has-role="['RECEPTIONIST', 'ADMIN']" ng-click="markAsNoShow(appt)"
-                    class="flex items-center gap-1.5 bg-rose-50 text-rose-700 border border-rose-200 px-3 py-2 rounded-lg text-sm font-bold hover:bg-rose-100 transition-colors">
+                    class="flex items-center gap-1.5 border border-rose-200 text-rose-500 rounded-lg px-3 py-1.5 text-sm font-bold hover:bg-rose-50 active:scale-[0.97] transition-all duration-150 shrink-0">
                     <span class="material-symbols-outlined text-sm">person_off</span> Faltou
                 </button>
             </ng-container>
 
             <button ng-if="appt.status === 'WAITING'" hc-has-role="['DOCTOR', 'ADMIN']"
                 ui-sref="patient-medical-records({patientId: appt.patient.id, appointmentId: appt.id})"
-                class="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors shadow-sm">
+                class="flex items-center gap-1.5 bg-primary text-white rounded-lg px-4 py-1.5 text-sm font-bold shadow-md shadow-primary/25 hover:brightness-110 active:scale-[0.95] transition-all duration-150 shrink-0">
                 <span class="material-symbols-outlined text-sm">play_arrow</span> Iniciar Consulta
             </button>
 
-            <span ng-if="appt.status === 'IN_PROGRESS'"
-                class="flex items-center gap-1.5 text-violet-600 text-xs font-bold">
-                <span class="material-symbols-outlined text-sm animate-pulse">stethoscope</span> Em andamento
-            </span>
+            <div ng-if="appt.status === 'IN_PROGRESS'"
+                class="flex items-center gap-2 px-3 py-1.5 bg-violet-50 rounded-full border border-violet-200 shrink-0">
+                <span class="w-2 h-2 rounded-full bg-violet-500 animate-pulse shrink-0"></span>
+                <span class="text-violet-600 text-xs font-bold">Em andamento</span>
+            </div>
 
+            <!-- DIVIDER -->
+            <div class="w-px h-6 bg-slate-200 dark:bg-slate-700 shrink-0 mx-0.5"
+                 ng-if="canCancelAppointment(appt.status) || appt.status === 'SCHEDULED' || appt.status === 'CONFIRMED'">
+            </div>
+
+            <!-- TIER 3: Cancelar (destrutivo, mantido visível) -->
             <button ng-if="canCancelAppointment(appt.status)"
                 hc-has-role="['DOCTOR', 'ADMIN', 'RECEPTIONIST']" ng-click="cancelAppointment(appt)"
-                class="flex items-center gap-1.5 bg-red-50 text-red-700 border border-red-200 px-3 py-2 rounded-lg text-sm font-bold hover:bg-red-100 transition-colors"
+                class="flex items-center gap-1 border border-transparent text-red-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 px-2.5 py-1.5 rounded-lg text-xs font-bold active:scale-[0.97] transition-all duration-150 shrink-0"
                 title="Cancelar consulta">
                 <span class="material-symbols-outlined text-sm">event_busy</span> Cancelar
             </button>
 
-            <button ng-if="appt.status === 'SCHEDULED' || appt.status === 'CONFIRMED'"
-                hc-has-role="['ADMIN', 'RECEPTIONIST']" ng-click="openRescheduleModal(appt)"
-                class="p-2 text-slate-400 hover:text-amber-500 transition-colors rounded-lg hover:bg-amber-50"
-                title="Remarcar">
-                <span class="material-symbols-outlined">update</span>
-            </button>
-
-            <button ng-if="!isTerminalStatus(appt.status) && appt.status !== 'IN_PROGRESS' && appt.status !== 'WAITING'"
-                hc-has-role="['ADMIN', 'RECEPTIONIST']" ng-click="openModal(appt)"
-                class="p-2 text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-primary/10"
-                title="Editar">
-                <span class="material-symbols-outlined">edit</span>
-        </button>
-
-            <button ng-if="appt.status === 'SCHEDULED' || appt.status === 'CONFIRMED'"
-                hc-has-role="['ADMIN', 'RECEPTIONIST']" ng-click="deleteAppointment(appt)"
-                class="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
-                title="Remover">
-                <span class="material-symbols-outlined">delete</span>
-            </button>
+            <!-- 3-dot dropdown: Remarcar, Editar, Remover -->
+            <div class="relative shrink-0"
+                ng-if="appt.status === 'SCHEDULED' || appt.status === 'CONFIRMED'"
+                hc-has-role="['ADMIN', 'RECEPTIONIST']">
+                <button ng-click="appt._menuOpen = !appt._menuOpen; $event.stopPropagation()"
+                    class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg active:scale-[0.90] transition-all duration-150"
+                    title="Mais ações">
+                    <span class="material-symbols-outlined text-[20px]">more_vert</span>
+                </button>
+                <div ng-if="appt._menuOpen"
+                    ng-click="$event.stopPropagation()"
+                    class="absolute right-0 bottom-full mb-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-[200] min-w-[152px] py-1 overflow-hidden">
+                    <button ng-click="openRescheduleModal(appt); appt._menuOpen = false"
+                        class="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left">
+                        <span class="material-symbols-outlined text-[18px] text-amber-500">update</span>
+                        Remarcar
+                    </button>
+                    <button ng-if="!isTerminalStatus(appt.status) && appt.status !== 'IN_PROGRESS' && appt.status !== 'WAITING'"
+                        ng-click="openModal(appt); appt._menuOpen = false"
+                        class="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left">
+                        <span class="material-symbols-outlined text-[18px] text-primary">edit</span>
+                        Editar
+                    </button>
+                    <div class="h-px bg-slate-100 dark:bg-slate-700 mx-2 my-1"></div>
+                    <button ng-click="deleteAppointment(appt); appt._menuOpen = false"
+                        class="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left">
+                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                        Remover
+                    </button>
+                </div>
+            </div>
 
         </div>
     </div>
