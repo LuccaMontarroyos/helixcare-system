@@ -3,7 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { BillingService } from './billing.service';
 import { PriceCatalogService } from './price-catalog.service';
 import { PatientsService } from '../../patients/services/patients.service';
-import { AppointmentArrivedEvent } from '../domain-events/appointment-arrived.event';
+import { AppointmentCompletedEvent } from '../domain-events/appointment-completed.event';
 import { ExamCompletedEvent } from '../domain-events/exam-completed.event';
 
 @Injectable()
@@ -16,9 +16,17 @@ export class BillingEventListenerService {
     private readonly patientsService:     PatientsService,
   ) {}
 
-  @OnEvent('appointment.arrived', { async: true })
-  async handleAppointmentArrived(event: AppointmentArrivedEvent): Promise<void> {
+  @OnEvent('appointment.completed', { async: true })
+  async handleAppointmentCompleted(event: AppointmentCompletedEvent): Promise<void> {
     try {
+      const alreadyBilled = await this.billingService.hasActiveInvoiceForAppointment(event.appointmentId);
+      if (alreadyBilled) {
+        this.logger.warn(
+          `[Billing] Fatura ativa já existe para appointment ${event.appointmentId} — auto-criação ignorada.`,
+        );
+        return;
+      }
+
       const patient    = await this.patientsService.findOne(event.patientId);
       const hasInsurance = !!(patient.insurance_provider && patient.insurance_number);
 
@@ -28,8 +36,9 @@ export class BillingEventListenerService {
         hasInsurance,
       );
 
-      const dueDate = new Date(event.appointmentDate);
-      dueDate.setDate(dueDate.getDate() + dueDays);
+      const effectiveDueDays = dueDays > 0 ? dueDays : 3;
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + effectiveDueDays);
       dueDate.setHours(23, 59, 59, 999);
 
       await this.billingService.create({
@@ -38,7 +47,7 @@ export class BillingEventListenerService {
         amount,
         payment_method: paymentMethod,
         due_date:       dueDate,
-        notes: `Fatura gerada automaticamente — ${event.appointmentType ?? 'consulta'} em ${new Date(event.appointmentDate).toLocaleDateString('pt-BR')}.`,
+        notes: `Fatura gerada automaticamente — ${event.appointmentType ?? 'consulta'} concluída em ${new Date().toLocaleDateString('pt-BR')}.`,
       });
 
       this.logger.log(

@@ -6,7 +6,7 @@ Geração automática e manual de faturas, checkout de pagamento, webhook de gat
 ## Fluxo de criação automática
 Faturas são criadas via eventos de domínio — NUNCA chamar BillingService
 diretamente de outros módulos. Use EventEmitter:
-- `appointment.arrived` → fatura de consulta
+- `appointment.completed` → fatura de consulta (gerada na conclusão do atendimento, não na chegada)
 - `exam.completed` → fatura de exame
 
 ## Cuidados com dados financeiros
