@@ -8,6 +8,8 @@
   import { RegisterDto } from '../dto/register.dto';
   import { LoginDto } from '../dto/login.dto';
   import { Role } from '../../roles/entities/role.entity';
+  import { Clinic } from '../../clinics/entities/clinic.entity';
+  import { RoleEnum } from '../../roles/enums/roles.enum';
 
   @Injectable()
   export class AuthService {
@@ -17,7 +19,7 @@
       private jwtService: JwtService,
     ) {}
 
-    async register(dto: RegisterDto) {
+    async register(dto: RegisterDto, clinicId: string | null) {
       const existingUser = await this.userModel.findOne({ where: { email: dto.email } });
       if (existingUser) {
         throw new BadRequestException('Este e-mail já está em uso.');
@@ -33,7 +35,8 @@
             email: dto.email,
             password_hash: hashedPassword,
             role_id: dto.role_id,
-          } as CreationAttributes<User>, 
+            clinic_id: clinicId,
+          } as CreationAttributes<User>,
           { transaction }
         );
 
@@ -52,7 +55,7 @@
     async login(dto: LoginDto) {
       const user = await this.userModel.findOne({
         where: { email: dto.email },
-        include: [Role], 
+        include: [Role, Clinic],
       });
 
       if (!user) {
@@ -64,9 +67,17 @@
         throw new UnauthorizedException('Credenciais inválidas.');
       }
 
-      const payload = { 
-        sub: user.id, 
-        role: user.role.name 
+      const isSuperAdmin = user.role.name === RoleEnum.SUPER_ADMIN;
+      if (!isSuperAdmin && user.clinic && !user.clinic.is_active) {
+        throw new UnauthorizedException('Esta clínica está inativa. Contate o administrador da plataforma.');
+      }
+
+      const clinicId = isSuperAdmin ? null : (user.clinic_id ?? null);
+
+      const payload = {
+        sub: user.id,
+        role: user.role.name,
+        clinicId,
       };
 
       return {
@@ -75,7 +86,8 @@
           id: user.id,
           name: user.name,
           role: user.role.name,
-        }
+          clinicId,
+        },
       };
     }
   }

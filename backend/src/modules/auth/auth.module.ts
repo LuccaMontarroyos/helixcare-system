@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule, JwtModuleOptions, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from '../users/users.module';
+import { ClinicsModule } from '../clinics/clinics.module';
 import { AuthController } from './controllers/auth.controller';
 import { AuthService } from './services/auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -9,7 +10,8 @@ import { RedisModule } from '../../core/redis/redis.module'
 
 @Module({
   imports: [
-    UsersModule, 
+    UsersModule,
+    ClinicsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

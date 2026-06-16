@@ -5,6 +5,7 @@ import {
 } from 'sequelize-typescript';
 import { Patient } from '../../patients/entities/patient.entity';
 import { User } from '../../users/entities/user.entity';
+import { Clinic } from '../../clinics/entities/clinic.entity';
 import { AppointmentStatusEnum } from '../enums/appointment-status.enum';
 import { AppointmentTypeEnum } from '../enums/appointment-type.enum';
 
@@ -65,6 +66,13 @@ export class Appointment extends Model<Appointment> {
 
   @Column({ type: DataType.UUID, allowNull: true })
   declare rescheduled_from_id: string | null;
+
+  @ForeignKey(() => Clinic)
+  @Column({ type: DataType.UUID, allowNull: true })
+  declare clinic_id: string | null;
+
+  @BelongsTo(() => Clinic)
+  declare clinic: Clinic;
 
   @CreatedAt
   declare created_at: Date;

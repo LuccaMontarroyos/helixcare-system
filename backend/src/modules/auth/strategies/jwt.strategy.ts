@@ -17,10 +17,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!payload) {
       throw new UnauthorizedException('Token inválido ou expirado.');
     }
-    
-    return { 
-      id: payload.sub, 
-      role: payload.role 
+
+    return {
+      id: payload.sub,
+      role: payload.role,
+      clinicId: payload.clinicId ?? null,
     };
   }
 }

@@ -1,6 +1,7 @@
 import { Table, Column, Model, DataType, CreatedAt, UpdatedAt, DeletedAt, ForeignKey, BelongsTo } from 'sequelize-typescript';
 import { Patient } from '../../patients/entities/patient.entity';
 import { User } from '../../users/entities/user.entity';
+import { Clinic } from '../../clinics/entities/clinic.entity';
 
 export interface SocialHistory {
   is_smoker: boolean;
@@ -55,6 +56,13 @@ export class MedicalRecord extends Model<MedicalRecord> {
 
   @Column({ type: DataType.JSONB, allowNull: true, defaultValue: [] })
   declare attachments: Attachment[];
+
+  @ForeignKey(() => Clinic)
+  @Column({ type: DataType.UUID, allowNull: true })
+  declare clinic_id: string | null;
+
+  @BelongsTo(() => Clinic)
+  declare clinic: Clinic;
 
   @CreatedAt
   declare created_at: Date;

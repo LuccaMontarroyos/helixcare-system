@@ -1,6 +1,7 @@
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo, CreatedAt, UpdatedAt, DeletedAt } from 'sequelize-typescript';
 import { Patient } from '../../patients/entities/patient.entity';
 import { User } from '../../users/entities/user.entity';
+import { Clinic } from '../../clinics/entities/clinic.entity';
 import { ExamStatusEnum } from '../enums/exam-status.enum';
 
 @Table({
@@ -56,6 +57,13 @@ export class Exam extends Model<Exam> {
 
   @Column({ type: DataType.STRING(500), allowNull: true })
   declare result_file_url: string;
+
+  @ForeignKey(() => Clinic)
+  @Column({ type: DataType.UUID, allowNull: true })
+  declare clinic_id: string | null;
+
+  @BelongsTo(() => Clinic)
+  declare clinic: Clinic;
 
   @CreatedAt
   declare created_at: Date;

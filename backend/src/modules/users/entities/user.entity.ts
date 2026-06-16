@@ -1,5 +1,6 @@
 import { Table, Column, Model, DataType, CreatedAt, UpdatedAt, DeletedAt, ForeignKey, BelongsTo } from 'sequelize-typescript';
 import { Role } from 'src/modules/roles/entities/role.entity';
+import { Clinic } from 'src/modules/clinics/entities/clinic.entity';
 
 @Table({
   tableName: 'users',
@@ -44,6 +45,13 @@ export class User extends Model<User> {
 
   @BelongsTo(() => Role)
   declare role: Role;
+
+  @ForeignKey(() => Clinic)
+  @Column({ type: DataType.UUID, allowNull: true })
+  declare clinic_id: string | null;
+
+  @BelongsTo(() => Clinic)
+  declare clinic: Clinic;
 
   @Column({ type: DataType.STRING(50), allowNull: true })
   declare document: string;

@@ -3,6 +3,7 @@ import { BillingEventListenerService } from './billing-event-listener.event';
 import { BillingService } from './billing.service';
 import { PriceCatalogService } from './price-catalog.service';
 import { PatientsService } from '../../patients/services/patients.service';
+import { TenantContextService } from '../../../core/tenant/tenant-context.service';
 import { AppointmentCompletedEvent } from '../domain-events/appointment-completed.event';
 
 const mockBillingService = {
@@ -18,6 +19,10 @@ const mockPatientsService = {
   findOne: jest.fn(),
 };
 
+const mockTenantContext = {
+  run: jest.fn((_, fn) => fn()),
+};
+
 const makeEvent = (): AppointmentCompletedEvent =>
   new AppointmentCompletedEvent(
     'appt-1',
@@ -25,6 +30,7 @@ const makeEvent = (): AppointmentCompletedEvent =>
     'doctor-1',
     'CONSULTA_ROTINA',
     new Date('2026-06-15T10:00:00Z'),
+    'clinic-1',
   );
 
 describe('BillingEventListenerService', () => {
@@ -39,6 +45,7 @@ describe('BillingEventListenerService', () => {
         { provide: BillingService, useValue: mockBillingService },
         { provide: PriceCatalogService, useValue: mockPriceCatalogService },
         { provide: PatientsService, useValue: mockPatientsService },
+        { provide: TenantContextService, useValue: mockTenantContext },
       ],
     }).compile();
 
