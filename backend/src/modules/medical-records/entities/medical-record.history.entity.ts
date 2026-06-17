@@ -1,6 +1,7 @@
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo, CreatedAt } from 'sequelize-typescript';
 import { MedicalRecord } from './medical-record.entity';
 import type { SocialHistory } from './medical-record.entity';
+import { Clinic } from '../../clinics/entities/clinic.entity';
 
 @Table({
   tableName: 'medical_record_histories',
@@ -36,6 +37,13 @@ export class MedicalRecordHistory extends Model<MedicalRecordHistory> {
 
   @Column({ type: DataType.JSONB, allowNull: true })
   declare old_social_history: SocialHistory;
+
+  @ForeignKey(() => Clinic)
+  @Column({ type: DataType.UUID, allowNull: true })
+  declare clinic_id: string | null;
+
+  @BelongsTo(() => Clinic)
+  declare clinic: Clinic;
 
   @CreatedAt
   @Column({ field: 'edited_at' })

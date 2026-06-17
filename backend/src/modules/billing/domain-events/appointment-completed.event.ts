@@ -5,5 +5,6 @@ export class AppointmentCompletedEvent {
     public readonly doctorId:        string,
     public readonly appointmentType: string | null,
     public readonly appointmentDate: Date,
+    public readonly clinicId:        string | null,
   ) {}
 }

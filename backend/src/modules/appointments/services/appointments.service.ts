@@ -240,6 +240,7 @@ export class AppointmentsService {
             updated.doctor_id,
             updated.appointment_type,
             updated.appointment_date,
+            updated.clinic_id ?? null,
           ),
         );
       }

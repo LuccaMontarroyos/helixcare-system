@@ -1,7 +1,9 @@
 import {
     Table, Column, Model, DataType,
     CreatedAt, UpdatedAt, DeletedAt,
+    ForeignKey, BelongsTo,
   } from 'sequelize-typescript';
+  import { Clinic } from '../../clinics/entities/clinic.entity';
   
   @Table({
     tableName: 'price_catalog',
@@ -45,6 +47,13 @@ import {
     @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
     declare is_active: boolean;
   
+    @ForeignKey(() => Clinic)
+    @Column({ type: DataType.UUID, allowNull: true })
+    declare clinic_id: string | null;
+
+    @BelongsTo(() => Clinic)
+    declare clinic: Clinic;
+
     @CreatedAt declare created_at: Date;
     @UpdatedAt declare updated_at: Date;
     @DeletedAt declare deleted_at: Date;

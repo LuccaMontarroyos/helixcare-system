@@ -129,6 +129,7 @@ export class ExamsService {
             updated.id,
             updated.patient_id,
             updated.exam_type,
+            updated.clinic_id ?? null,
           ),
         );
       }

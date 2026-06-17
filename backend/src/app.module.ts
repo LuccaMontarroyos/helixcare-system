@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './modules/users/users.module';
@@ -15,6 +16,9 @@ import { BillingModule } from './modules/billing/billing.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { SearchModule } from './search/search.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { TenantModule } from './core/tenant/tenant.module';
+import { TenantInterceptor } from './core/tenant/tenant.interceptor';
+import { ClinicsModule } from './modules/clinics/clinics.module';
 
 @Module({
   imports: [
@@ -55,6 +59,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
       }),
     }),
     
+    TenantModule,
+    ClinicsModule,
     UsersModule,
     RolesModule,
     AuthModule,
@@ -68,6 +74,12 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     SearchModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TenantInterceptor,
+    },
+  ],
 })
 export class AppModule {}

@@ -1,4 +1,5 @@
-import { Table, Column, Model, DataType, CreatedAt, UpdatedAt, DeletedAt } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, CreatedAt, UpdatedAt, DeletedAt, ForeignKey, BelongsTo } from 'sequelize-typescript';
+import { Clinic } from 'src/modules/clinics/entities/clinic.entity';
 
 @Table({
   tableName: 'patients',
@@ -17,7 +18,7 @@ export class Patient extends Model<Patient> {
   @Column({ type: DataType.STRING(150), allowNull: false })
   declare name: string;
 
-  @Column({ type: DataType.STRING(11), allowNull: false, unique: true })
+  @Column({ type: DataType.STRING(11), allowNull: false })
   declare cpf: string;
 
   @Column({ type: DataType.DATEONLY, allowNull: false })
@@ -46,6 +47,13 @@ export class Patient extends Model<Patient> {
 
   @Column({ type: DataType.STRING(500), allowNull: true })
   declare avatar_url: string;
+
+  @ForeignKey(() => Clinic)
+  @Column({ type: DataType.UUID, allowNull: true })
+  declare clinic_id: string | null;
+
+  @BelongsTo(() => Clinic)
+  declare clinic: Clinic;
 
   @CreatedAt
   declare created_at: Date;
